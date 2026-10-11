@@ -5,6 +5,7 @@
       name: '@deepseek-ai/dsh-nova-enterprise'
       # 企业地址由部署统一注入；未配置时只提示管理员，不向用户索要地址或密钥。
       config:
+        seedBuiltinThemes: true
         apiBaseUrl: !!js process.env.NOVA_HUB_API_URL ?? ''
         authentication: !!js process.env.NOVA_HUB_AUTH_MODE ?? 'none'
         allowInsecureHttp: !!js process.env.NOVA_HUB_ALLOW_HTTP === 'true'

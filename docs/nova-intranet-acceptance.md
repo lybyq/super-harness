@@ -66,7 +66,23 @@ Replace package.json for each directory below. `manifests/mcp-adapters/desktop.j
 | jira-mcp | JIRA_BASE_URL, JIRA_USERNAME, JIRA_API_TOKEN | Default Bearer PAT; password-based deployments need a separate secret/binding and new adapter version, not a password disguised as PAT |
 | dbhub | CONFIG_TOML, DB_DSN | `${DB_DSN}` in TOML, `--transport stdio --config FILE_CONFIG`; least-privilege test DB, drivers, SSH, TLS and network |
 
-GitLab MCP source directory, package name, bin, arguments, protocol and auth are not supplied; it is not falsely marked adapted. Add its actual declaration and run the acceptance checks. Skills/Plugins needing settings use the same configuration/secrets forms; parameterless ones load directly. Claude plugins are not automatically official Host SDK compatible: provide a native binding or explicit conversion adapter.
+The GitLab MCP source directory, package name, bin, arguments, protocol and authentication are unavailable; it is not marked adapted. Use a custom declaration after transfer and qualify it below. Skills use the same public configuration form but do not support secrets; MCP/Plugin owns account secrets. Parameter-free resources load immediately. Not every Claude plugin is an official Host plugin: require a DeepSeek native binding or explicit conversion adapter.
+
+## Additional MCP and developer entry
+
+See the [capability development standard](nova-capability-development.md) for new/external capabilities, desktop module rules, unified configuration, SDK, roles and the exact Agent creation/publication workflow. Hub preparation now accepts custom `--manifest` declarations without adding each package to the built-in six-package list. Differing existing declarations are not overwritten. Discoverable indexes/matching rules remain required for new packages.
+
+| Capability | Available material/entry | Required intranet material and verification |
+|---|---|---|
+| CodeGraph | No local source found; package/environment names are not guessed | Source path, package/bin/version, index commands, database/cache, project scan limits, minimal read-only call |
+| Playwright (playwrite-mcp) | Local pinned `@playwright/mcp@0.0.80`; new Hub `manifests/mcp-adapters/playwright.json`, verified package/CLI | Actual private coordinates, dependency closure, preinstalled browser path, origins, firewall, tools/list/page tests; not completed browser integration |
+| Wiki | No local source found; product unspecified | Product/version, source path, package/bin, REST/authentication fields, space permissions, read-only queries/redaction |
+| GitLab MCP | Source/package coordinates unavailable; distinct from GitLab source or Board Provider | Repository/package, authentication, project restrictions, actual protocol/tool permissions |
+| Future internal/external imports | Internal npm artifact with novaHarness; independent custom adapter | Exact version, license, dependency closure, runtime assets, public/secret fields, migration and full lifecycle |
+
+Keep one internal record per added MCP: `source repository/path=pending; original version/SHA=pending; private package/version/bin=pending; Hub ID/sourceId=pending; parameter/secret keys (no values)=pending; read-only tool/result=unverified; disable/update/rollback/remove=unverified; two-project isolation=unverified`. Missing material cannot mean installation-ready. Do not publish placeholder records as actual resources.
+
+Choose either the official per-Session Playwright Provider or generic Hub MCP, without duplicate activation. Agent drafts and user-confirmed publication exist; arbitrary-code build sandboxes/GitLab CI do not. The development standard distinguishes content validation, author tests and real installation acceptance. User confirmation is not administrator approval. Build complex source before importing runtime artifacts.
 
 ## Migrate default role mappings
 
@@ -114,7 +130,7 @@ Host/Client and Hub/script TypeScript checks, scoped source lint, six package/bi
 Unchecked items require actual target receipts, logs and screenshots. Never export personal credentials, DB contents or Authorization-bearing captures.
 
 - [ ] Addresses/CA/allowlists: anonymous browse/search without Hub token entry or administrator approval; reject bad certificates, redirects and unauthorized artifact hosts.
-- [ ] Seven MCP families: exact download, required forms, invalid/valid accounts, tools/list, minimal read-only call, reload, disable, upgrade/rollback/removal; two project accounts do not leak.
+- [ ] Every MCP (six packages plus CodeGraph/Playwright/Wiki/GitLab): complete the records above, exact downloads, required forms, bad/good accounts, tools/list, a minimal read-only call, reload, disable, update/rollback/remove; two-project accounts must remain separate.
 - [ ] Private dependency closure: full npm transitives/integrity, GitLab SHA/nested Skill, native platform packages/Python/Office/OCR/themes/pet assets mirrored; lifecycle scripts stay blocked, not globally relaxed for one package.
 - [ ] Publish loop: test GitLab project/private npm package, generate/import → validate → confirm → upload → sync → exact install; reject duplicates and recover partial tag/index receipts without duplicate writes.
 - [ ] Author extensions: real Skill/Plugin/Bundle, parameterless loading and forms when needed; SDK late registration, disable, role denial and restart; separate trusted-code review.
@@ -127,4 +143,4 @@ Unchecked items require actual target receipts, logs and screenshots. Never expo
 
 ## Explicit non-goals
 
-Anonymous deployment does not introduce SSO/approval administration. Arbitrary conditional policies remain fail-closed without an authoritative executor; trusted Host plugins are not OS-sandboxed. These deliberate boundaries are not disconnected implementations and never justify bypassing official permissions. Actual GitLab MCP coordinates, publishing rights, signing certificates and intranet results are the materials that cannot be supplied from the external environment.
+Anonymous deployment does not add SSO or an approval backend. Arbitrary conditional policies lack an authoritative executor and remain fail-closed; trusted Host plugins do not provide an OS sandbox. These deliberate limits are not disconnected missing features, and do not authorize bypassing official permissions. Actual CodeGraph/Wiki/GitLab MCP material, production publication authority, Windows certificates and real intranet qualification cannot be filled externally.

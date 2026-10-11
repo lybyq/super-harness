@@ -66,7 +66,23 @@ node --import tsx/esm scripts/prepare-mcp-manifest.ts --package E:/ai/yapi-mcp/p
 | jira-mcp | JIRA_BASE_URL、JIRA_USERNAME、JIRA_API_TOKEN | 此适配默认 Bearer PAT；若真实服务要求密码，需另加对应秘密字段／绑定，并发布独立适配版本，不能拿密码冒充 PAT |
 | dbhub | CONFIG_TOML、DB_DSN | TOML 使用 `${DB_DSN}`，`--transport stdio --config FILE_CONFIG`；仅授予测试数据库最小权限，验证驱动、SSH、TLS 与网络 |
 
-GitLab MCP 的实际源码目录、包名、bin、传参、协议和认证未提供，不能假造“已适配”。带入后照六个声明新增一条，完成下面验收。任意需要配置的 Skill／Plugin 使用同一 configuration／secrets 声明和表单；无参数则安装即加载。不是所有 Claude Plugin 都兼容官方 Host SDK，必须有 DeepSeek 原生绑定或使用明确的转换适配。
+GitLab MCP 的实际源码目录、包名、bin、传参、协议和认证未提供，不能假造“已适配”。带入后用自定义声明接入，完成下面验收。Skill 使用同一公开 configuration 表单，但不支持秘密参数；账号秘密交给 MCP／Plugin。无参数则安装即加载。不是所有 Claude Plugin 都兼容官方 Host SDK，必须有 DeepSeek 原生绑定或明确转换适配。
+
+## 追加 MCP 与开发入口
+
+新增／外网导入能力、桌面模块规范、统一配置、SDK、角色组合及 Agent 创建到发布的准确流程，见[能力开发规范](nova-capability-development.zh.md)。Hub 准备工具支持 `--manifest` 自定义声明，不再要求每个新包修改内置六包名单；已有不同声明不会自动覆盖。未来包需要准确索引／匹配规则才能被搜索。
+
+| 能力 | 已有材料／适配入口 | 内网待填与验证 |
+|---|---|---|
+| CodeGraph | 未找到本机源码；不猜包名／环境变量 | 源码路径、包名／bin／版本、索引命令、数据库／缓存、项目扫描边界、只读最小调用 |
+| Playwright（playwrite-mcp） | 本机固定 `@playwright/mcp@0.0.80`；新增 Hub `manifests/mcp-adapters/playwright.json`，包名／CLI 已核实 | 真实私有坐标、完整依赖、预置浏览器路径、origin、防火墙、tools/list／页面测试；不是已完成浏览器联调 |
+| Wiki | 未找到本机源码；具体产品未确定 | 产品／版本、源码路径、包名／bin、REST／认证字段、空间权限、只读查询及脱敏 |
+| GitLab MCP | 源码／包坐标仍未给出；不等同 GitLab 来源或 Board Provider | 仓库／包名、认证、项目限制、实际协议与工具权限 |
+| 未来自研／外网导入 | 内网 npm 制品加 novaHarness；独立自定义适配文件 | 精确版本、许可、依赖闭包、运行资产、公开／秘密字段、升级迁移与全生命周期 |
+
+内网每个新增 MCP 留一份记录：`源码仓库/路径=待填；原始版本/SHA=待填；私有包名/版本/bin=待填；Hub ID/sourceId=待填；参数和秘密键（不填实际值）=待填；只读测试工具/结果=待验；停用/更新/回滚/卸载=待验；两个项目隔离=待验`。没有这些材料不能标为“安装即可用”；不将待填占位符发布成真实资源。
+
+Playwright 可选择官方逐 Session Provider 或 Hub 通用 MCP，但不要重复启用。Agent 草稿创建和用户确认发布已存在；任意生成代码的自动构建沙箱／GitLab CI 未提供，开发规范明确区分内容校验、作者测试和真实安装验收。用户确认不是管理员审批；复杂源码需先构建，再导入运行制品。
 
 ## 默认角色映射迁移
 
@@ -114,7 +130,7 @@ Host／Client、Hub／脚本类型检查、针对性源码 lint、六包精确�
 下面留空的不是实现承诺，而是必须在真实环境记录回执／日志／截图后才能勾选的验收项。不要把个人秘密、数据库内容或带 Authorization 的抓包带回外网。
 
 - [ ] 部署地址／CA／白名单：免登录浏览与搜索，普通用户无需管理员审批或填 Hub 令牌；错误证书、非法重定向、未允许下载主机必须拒绝。
-- [ ] 逐个七类 MCP：精确下载，新必填表单、错误／有效账号、tools/list、至少一次最小只读工具调用、重载、停用、升级／回滚、卸载；两个项目不同账户不能串用。
+- [ ] 逐个 MCP（包含六包及新增 CodeGraph／Playwright／Wiki／GitLab）：补齐上表记录、精确下载、必填表单、错误／有效账号、tools/list、至少一次最小只读调用、重载、停用、升级／回滚、卸载；两个项目不同账户不能串用。
 - [ ] 私有依赖闭包：npm 完整传递依赖／integrity、GitLab SHA／嵌套 Skill、原生平台包／Python／Office／OCR／主题／宠物静态素材均有内网镜像；默认生命周期脚本禁止，不能为修复单包开启全局任意脚本。
 - [ ] 发布闭环：创建测试 GitLab 项目／私有 npm 包，界面生成或导入 → 校验 → 确认 → 上传 → 同步 → 精确安装；重复版本拒绝；tag 失败／源已成功但索引未成功的部分回执可恢复而不重复上传。
 - [ ] 作者扩展：真实内网 Skill、Plugin、Bundle 无参数即加载，有参数统一表单；SDK 延迟注册工具、停用、角色拒绝、重启恢复；可信 Host 代码审查单独记录。
@@ -127,4 +143,4 @@ Host／Client、Hub／脚本类型检查、针对性源码 lint、六包精确�
 
 ## 已知非目标
 
-免登录部署不引入 SSO／审批后台。任意条件策略没有权威执行器，继续 fail-closed；可信 Host 插件不提供 OS 沙箱。无需将这些故意的边界当成“缺一块未接线”，也不能据此绕过官方权限。真实 GitLab MCP 坐标、生产发布授权、Windows 证书与内网实测是唯一不能在外网替你填好的材料。
+免登录部署不引入 SSO／审批后台。任意条件策略没有权威执行器，继续 fail-closed；可信 Host 插件不提供 OS 沙箱。无需将这些故意的边界当成“缺一块未接线”，也不能据此绕过官方权限。真实 CodeGraph／Wiki／GitLab MCP 材料、生产发布授权、Windows 证书和内网实测不能在外网替你填好。

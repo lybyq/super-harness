@@ -1,0 +1,8 @@
+[
+  { "id": "harness-obsidian", "name": "曜石", "nameEn": "Obsidian", "cssSha256": "d20744b6ed2167300fb39158f45b164a12c2755a2904e8e67d1b0535b6a0a8fd" },
+  { "id": "harness-deep-sea", "name": "深海", "nameEn": "Deep Sea", "cssSha256": "877e90e99d46e532c306d46c1a481b4af14b857a9aaaf077c23b9372ccc7bdb6" },
+  { "id": "harness-pine", "name": "松林", "nameEn": "Pine", "cssSha256": "cc3fd8b58cd61176ae808b239807eceea00ac7aadaf9c2bd8f091d221b36dd1b" },
+  { "id": "harness-polar", "name": "极地", "nameEn": "Polar", "cssSha256": "d64171ff32c9cce7b5ae9a62dd3b140296184d4389729f51b701738bde5864f0" },
+  { "id": "harness-warm-paper", "name": "暖纸", "nameEn": "Warm Paper", "cssSha256": "5dfa4f7b5922417600ca8f5337f8042ebc6e3efdf70d0fd9c73a675085b5d154" },
+  { "id": "harness-mist", "name": "雾青", "nameEn": "Mist", "cssSha256": "ae98d8fbb2ec01f1c66ce4152ba14c1488fdebd86681d73f4798f645638375b5" }
+]

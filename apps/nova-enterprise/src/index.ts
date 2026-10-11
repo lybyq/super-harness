@@ -13,6 +13,8 @@ import { workspaces, workspaceScope, agentWorkspace } from './workspace.ts'
 import { protectedCredentials, windowsCredentialCipher } from './credential-protection.ts'
 import { CapabilityTools } from './capability-tools.ts'
 import { resourceDrafts } from './resource-drafts.ts'
+import { seedBuiltinThemes } from './builtin-themes.ts'
+import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
 export { CapabilityTools } from './capability-tools.ts'
 export type { TeamMemberSettings, TeamTaskSettings } from './types.ts'
 import type { Context } from '@deepseek-ai/cordis'
@@ -23,6 +25,7 @@ import type {} from '@deepseek-ai/dsh-client-connection'
 export const name = 'nova-hub'
 export const inject = ['connection', 'credentials']
 export const Config = Schema.object({
+  seedBuiltinThemes: Schema.boolean().default(false).description('Seed missing offline themes into the user skin directory; never change the active skin.'),
   secretProtection: Schema.union(['none', 'windows-dpapi'])
     .default('none')
     .description('Host credential encryption; Windows DPAPI binds records to the current Windows user.'),
@@ -95,6 +98,7 @@ export const Config = Schema.object({
 export type Config = Pick<
   ReturnType<typeof Config>,
   | 'apiBaseUrl'
+  | 'seedBuiltinThemes'
   | 'secretProtection'
   | 'authentication'
   | 'tokenEnvironmentVariable'
@@ -187,6 +191,13 @@ function publicForm(document: unknown, saved: StoredConfiguration) {
  * @returns 路由与真实运行实例由 ctx.effect 管理；制品仅从部署允许的源下载。
  */
 export function apply(ctx: Context, options: Config) {
+  if (options.seedBuiltinThemes) {
+    try { seedBuiltinThemes(dshHomePath('skins')) } catch (error) {
+      // 可选主题失败不影响 Hub 和既有皮肤，只保留已原子提交的目录。
+      console.warn('[harness-themes] Built-in themes unavailable; check DSH_HOME/skins permissions and links, then restart.',
+        error instanceof Error && 'code' in error ? error.code : 'THEME_SEED_FAILED')
+    }
+  }
   const credentials = protectedCredentials(
     ctx.credentials,
     options.secretProtection === 'windows-dpapi' ? windowsCredentialCipher(options.timeoutMs) : undefined,

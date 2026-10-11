@@ -55,6 +55,7 @@ Nova Desktop Host 的部署补丁将此包挂载在官方界面旁。
 | engineEntry | 空 | 为空使用内置 `lib/engine.js` 和 npm CLI（命令行界面）；可选开发入口用于定位共享包，不执行 CLI |
 | deploymentFile | 空 | 可信源 DeploymentProfile；Hub URL 和 Runtime 必须与桌面一致 |
 | resourceHome | 空 | 桌面专属 Store 根目录，不与 CLI 状态共用 |
+| seedBuiltinThemes | false | 初始化缺失的离线主题；Desktop Host 默认开启，不改变当前皮肤 |
 | maxHistory | 10 | 最多保留的能力变更历史，范围 1–100 |
 | offlineMaxEntries | 200 | 每个 Hub 的已校验读取缓存数量，范围 1–1000 |
 | offlineMaxBytes | 16777216 | 读取缓存总字节数，范围 1–67108864 |
@@ -66,6 +67,10 @@ Nova Desktop Host 的部署补丁将此包挂载在官方界面旁。
 | teamStartupTimeoutMs | 60000 | 单个队友启动上限，范围 1000–120000 毫秒 |
 
 Desktop Host 补丁读取 `NOVA_HUB_API_URL`、`NOVA_HUB_AUTH_MODE`（默认 `none`）和 `NOVA_HUB_ALLOW_HTTP`（显式设为 `true` 才允许 HTTP）。管理员在桌面启动环境中提供这些值并重启桌面。`bearer` 模式通过企业启动环境注入 `NOVA_HUB_TOKEN`；它不会返回 Client 或发送给模型。HTTP 不保护传输中的凭据。禁止将地址或令牌提交到公开仓库。真实内网连通性须在目标网络验证。
+
+### 离线桌面主题
+
+Desktop Host 在 `$DSH_HOME/skins` 初始化六套配对的明暗色板：曜石、深海、松林、极地、暖纸和雾青。打开社区皮肤中心预览并应用；官方外观设置选择浅色、深色或跟随系统。样式与 SVG 预览由随包数据在本地生成，不发送网络请求、不依赖字体或图片下载、不执行钩子。已有同 ID 条目与当前选择均不覆盖。初始化开启时，删除的随包主题在下次启动恢复；关闭初始化不删除已有文件。目录失败会输出启动警告，不停用 Hub。真实桌面的视觉验收仍需人工完成。
 
 ### 在桌面配置能力
 
@@ -152,6 +157,7 @@ Host 业务源码和源码测试使用 TypeScript，Client 使用 TS／TSX。Hos
 ## 进一步探索
 
 - [Nova 开发](../../nova/README.zh.md) — 基线、社区层和验证边界。
+- [能力开发规范](../../docs/nova-capability-development.zh.md) — MCP／Skill／Plugin／模块扩展、配置、角色与 Agent 发布闭环。
 - [社区模块清单](../../docs/nova-community-integration.zh.md) — 全部固定模块和默认开关。
 - [官方桌面](../desktop/README.zh.md) — 内置运行时和交付约定。
 - [Client 包组](../../packages/client/README.zh.md) — 共享浏览器模块加载器构建。

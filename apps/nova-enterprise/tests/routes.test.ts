@@ -12,7 +12,7 @@ const doc = {
 }
 
 test('deployment limits are resolved and reject fractional or zero budgets', () => {
-  assert.deepEqual(Config({}), { secretProtection: 'none', apiBaseUrl: '', authentication: 'none', tokenEnvironmentVariable: 'NOVA_HUB_TOKEN', allowInsecureHttp: false, timeoutMs: 15000, maxResponseBytes: 2097152, maxRequestBytes: 65536, engineEntry: '', deploymentFile: '', resourceHome: '', maxHistory: 10, teamProvider: 'spawn', teamStartupTimeoutMs: 60000, offlineMaxEntries: 200, offlineMaxBytes: 16777216, offlineMaxAgeMs: 86400000, activationTimeoutMs: 30000, allowPublishing: false, publishingTimeoutMs: 120000 })
+  assert.deepEqual(Config({}), { seedBuiltinThemes: false, secretProtection: 'none', apiBaseUrl: '', authentication: 'none', tokenEnvironmentVariable: 'NOVA_HUB_TOKEN', allowInsecureHttp: false, timeoutMs: 15000, maxResponseBytes: 2097152, maxRequestBytes: 65536, engineEntry: '', deploymentFile: '', resourceHome: '', maxHistory: 10, teamProvider: 'spawn', teamStartupTimeoutMs: 60000, offlineMaxEntries: 200, offlineMaxBytes: 16777216, offlineMaxAgeMs: 86400000, activationTimeoutMs: 30000, allowPublishing: false, publishingTimeoutMs: 120000 })
   assert.throws(() => Config({ timeoutMs: 0 }))
   assert.throws(() => Config({ timeoutMs: 1.5 }))
   assert.throws(() => Config({ authentication: 'auto' }))

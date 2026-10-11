@@ -55,6 +55,7 @@ The official authenticated `connection` and `credentials` services must already 
 | engineEntry | empty | Empty uses bundled `lib/engine.js` and npm CLI; optional development anchor resolves shared packages without executing CLI main |
 | deploymentFile | empty | Trusted-source DeploymentProfile; Hub URL and runtime must match the desktop |
 | resourceHome | empty | Desktop-owned Store root, separate from CLI state |
+| seedBuiltinThemes | false | Seed missing offline themes; the Desktop Host enables this without changing the active skin |
 | maxHistory | 10 | Retained capability revisions, range 1–100 |
 | offlineMaxEntries | 200 | Validated read-cache entries per Hub, range 1–1000 |
 | offlineMaxBytes | 16777216 | Total read-cache bytes, range 1–67108864 |
@@ -66,6 +67,10 @@ The official authenticated `connection` and `credentials` services must already 
 | teamStartupTimeoutMs | 60000 | Teammate provisioning budget, range 1000–120000 ms |
 
 The Desktop Host patch reads `NOVA_HUB_API_URL`, `NOVA_HUB_AUTH_MODE` (default `none`), and `NOVA_HUB_ALLOW_HTTP` (`true` explicitly permits HTTP). Administrators supply these in the desktop launch environment and restart the desktop. For `bearer`, inject `NOVA_HUB_TOKEN` through the enterprise launch environment; it is not returned to the Client or sent to the model. HTTP does not protect credentials in transit. Do not commit addresses or tokens to the public repository. Real intranet connectivity must be verified in the target network.
+
+### Offline desktop themes
+
+The Desktop Host seeds six paired light/dark palettes into `$DSH_HOME/skins`: Obsidian, Deep Sea, Pine, Polar, Warm Paper and Mist. Open the community Skin Center to preview and apply them; official appearance settings select light, dark or system mode. Styles and SVG previews are generated locally from bundled data, without network requests, fonts, images or executable hooks. Existing same-ID entries and the active selection are never overwritten. Removing a supplied theme restores it at the next startup while seeding is enabled; disabling seeding does not remove existing files. Directory failures produce a startup warning without disabling the Hub. Actual desktop visual acceptance remains manual.
 
 ### Configure capabilities in the desktop
 
@@ -152,6 +157,7 @@ Capability grants use the official credential Provider with optional Windows DPA
 ## Further Exploration
 
 - [Nova development](../../nova/README.md) — baseline, community layers, and verification boundaries.
+- [Capability development](../../docs/nova-capability-development.md) — MCP/Skill/Plugin/module extensions, configuration, roles and Agent publication workflow.
 - [Community inventory](../../docs/nova-community-integration.md) — complete pinned module inventory and disabled defaults.
 - [Official desktop](../desktop/README.md) — bundled runtime and delivery contract.
 - [Client group](../../packages/client/README.md) — shared browser module-loader build.

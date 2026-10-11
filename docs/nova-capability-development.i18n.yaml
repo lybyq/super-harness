@@ -1,0 +1,40 @@
+# Bilingual-pair consistency record for nova-capability-development.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/nova-capability-development.md
+/:
+  en: 9552da173904a788
+  zh: 550550ddca664352
+/harness-capability-development-standard:
+  en: 8528ce0809b6f73c
+  zh: 145eaaab7aec40c7
+/harness-capability-development-standard/summary:
+  en: 68ba93058fd1e611
+  zh: 32ea2ba7a3d53a97
+/harness-capability-development-standard/table-of-contents:
+  en: 103f0724ad35403f
+  zh: 1978a7c2559ae436
+/harness-capability-development-standard/choose-an-extension-entry:
+  en: aaf1d2020b73b729
+  zh: 1d1d88cca43b0ae3
+/harness-capability-development-standard/source-and-module-standards:
+  en: 14d82c6715afdc5c
+  zh: 99c72ef0a4eff4b7
+/harness-capability-development-standard/add-and-import-mcp:
+  en: feab46485e90155c
+  zh: 9cb0c0b4a107d488
+/harness-capability-development-standard/configuration-and-permissions:
+  en: 1d51162150784d27
+  zh: 383e97d0ca37f57a
+/harness-capability-development-standard/skill-and-native-plugin:
+  en: cd4c013c09ae1340
+  zh: 0b70b1ac8a0c2bc2
+/harness-capability-development-standard/agent-creation-and-publication-workflow:
+  en: 58c9c4ca7b6abdc0
+  zh: 660b336a2a824686
+/harness-capability-development-standard/acceptance-and-failure-recovery:
+  en: b198e758b4a15755
+  zh: 73eff89e3440872f
+/harness-capability-development-standard/dev-note:
+  en: ad3120c4cfa0d66a
+  zh: 4b34edb3412cb7eb

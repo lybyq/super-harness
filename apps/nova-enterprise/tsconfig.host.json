@@ -3,6 +3,7 @@
   "compilerOptions": { "rootDir": "src", "outDir": "lib/types/host", "tsBuildInfoFile": "lib/tsconfig.host.tsbuildinfo" },
   "include": ["src/*.ts"],
   "references": [
+    { "path": "../../packages/util/home-paths" },
     { "path": "../../vendor/cordis" }, { "path": "../../vendor/schemastery" },
     { "path": "../../packages/credentials/credentials" },
     { "path": "../../packages/client/connection/tsconfig.host.json" },

@@ -93,6 +93,8 @@ This is a format example, not the parameters of any real Wiki/CodeGraph implemen
 
 The tool writes `manifest` to `package.json.novaHarness`, not the outer package coordinates. Object `bin` entries require an exact key and safe relative entry path. String single-entry packages omit binding `bin`, matching the desktop installer. Package/name/version/entry mismatches, missing stdio MCP bindings and differing existing declarations reject. The tool does not overwrite customized declarations.
 
+The preparation tool handles npm stdio packages. Runtime also supports `transport=streamable-http`, `url` and `headers` bindings, with authentication secrets resolved in Host memory; legacy SSE is not converted automatically. Installation still uses Hub's verified artifact/receipt model rather than treating an arbitrary user-entered HTTP URL as successful installation. HTTP MCP needs an explicit connector artifact/service source and real protocol/authentication/network/disposal checks. Non-Node CLI binaries cannot execute directly as JS bins either.
+
 The six existing adapters still use built-in declarations. The new Playwright declaration lives in the Hub repository at `manifests/mcp-adapters/playwright.json`. Run the following from Hub; the second command checks the local dependency and applies only when this development-checkout path exists. Neither modifies `node_modules`.
 
 ```powershell
@@ -150,7 +152,7 @@ The current workflow keeps publication decisions with the user, not a resource-a
 1. Describe the capability, business scope, read-only requirements, actual platform version and parameter names in the project chat, without real passwords. The Agent generates README, declarations and necessary source/runtime files, then saves a draft.
 2. Open AI Hub → Development and publication, load/import the generated draft or your directory/files, review content and choose the exact source/version. Drafts can be edited/deleted; deletion does not delete remote packages.
 3. Build and test in an independent development workspace, then import compiled artifacts. The current page is a text-file editor, not an automatic dependency/build/binary-packaging system for arbitrary TypeScript/Python source.
-4. The page validates paths, declarations, native entries, exact versions, source scope and content digests. Skill secrets, sensitive files, npm publication scripts and external publishConfig reject. Validation is not a code security review or MCP business integration test.
+4. The page validates paths, declarations, native entries, exact versions, source scope and content digests. Skill secrets, disallowed root paths such as `.env`/`.npmrc`, npm publication scripts and external publishConfig reject, but this is not a secret scanner for arbitrary file contents. Validation is not a code security review or MCP business integration test.
 5. Confirm the same digest explicitly. Skill/Plugin publication writes an existing GitLab project and tags a fixed SHA; MCP publication targets an exact private npm version. GitLab projects are not created automatically; deployment Group/scope restrictions and account permissions apply.
 6. Synchronize the source and confirm the corresponding Hub version/SHA, then install that version, configure parameters, verify tool calls and add it to personal roles/teams. This uses normal installation, not automatic generated-code execution when publication succeeds.
 
@@ -176,6 +178,7 @@ Record exact IDs/package versions/SHAs/manifestChecksum, not only successful dow
 
 Tool-list changes can invalidate old role-denial lists, so review role configuration when capabilities update; authors own stable native tool names. Public/secret key renames, platform dependency changes and Bundle restart requirements need upgrade guidance. CodeGraph/Wiki/GitLab MCP without supplied source, real browsers and private publication links remain intranet acceptance items, not completed tests.
 
+<a id="dev-note"></a>
 ## Dev Note
 
 None. Unexecuted intranet operations belong in the handoff checklist, not completion claims in this reference.

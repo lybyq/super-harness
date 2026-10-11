@@ -98,7 +98,7 @@ describe('Nova community desktop composition', () => {
     const profile = loadProfileDirectory('dsh', root, join(project, 'node_modules/@deepseek-ai/dsh-desktop-host/package.json'))
     expect(profile.skippedBundles).toEqual([])
     expect(profile.layers.map(layer => layer.packageName)).toEqual(NOVA_DESKTOP_BUNDLES)
-    const rows = applyEntryPatches([], profile.layers.flatMap(layer => layer.patches))
+    const rows = applyEntryPatches([], profile.layers.flatMap(layer => layer.patches), (message) => { throw new Error(message) })
     for (const id of ['web-ui-market', 'web-ui-community-plugins', 'web-ui-remote-web-ui',
       'web-ui-update', 'web-ui-task-board-github']) {
       expect(rows.find(row => row.id === id)?.disabled, id).toBe(true)

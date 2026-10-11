@@ -29,7 +29,7 @@ Project scope supports MCP/Skill only; Host Plugin/Bundle requires user scope be
 
 ## Transfer sources and artifacts
 
-Transfer changes from both repositories using three-way file merges, preserving intranet modifications. Record commits and local diffs, retaining upstream MIT and community Apache-2.0 licenses. No commit/push, dependency reinstall or full build was performed on your behalf.
+Transfer changes from both repositories using three-way file merges, preserving intranet modifications. Record commits and local diffs, retaining upstream MIT and community Apache-2.0 licenses. A source commit or push does not qualify the intranet deployment or desktop installer.
 
 Also transfer the `novaHarness` metadata now added to package.json in all six local MCP directories: `yapi-mcp`, `memory-mcp`, `mcp/nova-ui-plus-mcp`, `markitdown`, `jira-mcp`, `dbhub`. Versions remain unchanged for merging, not falsely published; select an unused version before intranet publication. Preparation commands below check/adapt other checkouts; these six declarations do not need rewriting.
 

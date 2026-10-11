@@ -9,10 +9,12 @@ const baseline = JSON.parse(readFileSync(new URL('../upstream.json', import.meta
 
 test('the pinned official release is retained in Nova branch history', () => {
   assert.equal(baseline.repository, 'https://github.com/deepseek-ai/deepseek-harness.git');
-  assert.match(baseline.commit, /^[a-f0-9]{40}$/);
   assert.match(baseline.tag, /^dsh-v[0-9]+\.[0-9]+\.[0-9]+-[a-z]+\.[0-9]+$/);
-  execFileSync('git', ['merge-base', '--is-ancestor', baseline.commit, 'HEAD'], { cwd: root });
-  const source = JSON.parse(execFileSync('git', ['show', `${baseline.commit}:package.json`], { cwd: root, encoding: 'utf8' }));
+  // 使用发布标签解析真实提交，保持祖先关系验证，不在维护文件中重复保存裸 SHA。
+  const commit = execFileSync('git', ['rev-parse', '--verify', `${baseline.tag}^{commit}`], { cwd: root, encoding: 'utf8' }).trim();
+  assert.match(commit, /^[a-f0-9]{40}$/);
+  execFileSync('git', ['merge-base', '--is-ancestor', commit, 'HEAD'], { cwd: root });
+  const source = JSON.parse(execFileSync('git', ['show', `${commit}:package.json`], { cwd: root, encoding: 'utf8' }));
   assert.equal(baseline.tag, `dsh-v${source.version}`);
 });
 

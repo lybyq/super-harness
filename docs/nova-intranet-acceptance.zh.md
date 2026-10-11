@@ -29,7 +29,7 @@
 
 ## 带入代码与编译产物
 
-同时带入 `super-harness` 与 `nova-harness` 的本次修改，按文件三方合并，不覆盖内网已经修改的整棵目录。记录各仓库 commit 和本地 diff，保留上游 MIT／社区 Apache-2.0 许可。没有替你 commit 或 push，也没有重装依赖或做全量 build。
+同时带入 `super-harness` 与 `nova-harness` 的本次修改，按文件三方合并，不覆盖内网已经修改的整棵目录。记录各仓库 commit 和本地 diff，保留上游 MIT／社区 Apache-2.0 许可。源码提交或推送不代表内网部署或桌面安装包已经验收。
 
 六个本地 MCP 的 package.json 已加入 `novaHarness` 声明，也必须带入：`yapi-mcp`、`memory-mcp`、`mcp/nova-ui-plus-mcp`、`markitdown`、`jira-mcp`、`dbhub`。保留当前版本号便于三方合并，不声称已发布；内网发布前选择未使用的新版本。下面的准备命令用于检查或适配其他内网 checkout，当前六份声明不需要重复写入。
 

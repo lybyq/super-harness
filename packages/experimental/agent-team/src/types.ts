@@ -4,7 +4,6 @@ import type { MessageId } from '@deepseek-ai/dsh-llm/brand'
 import type { Branded } from '@deepseek-ai/dsh-brand'
 import type { ContentBlock } from '@deepseek-ai/dsh-llm/types'
 import type { SessionId } from '@deepseek-ai/dsh-session/types'
-import type { AgentOptions } from '@deepseek-ai/dsh-agent'
 
 /** Identifies the implicit team rooted at one top-level Session. */
 export type TeamId = Branded<'TeamId'>
@@ -170,10 +169,6 @@ export interface SpawnTeammateRequest {
   readonly context: 'fresh' | 'fork'
   readonly provider: string
   readonly signal: AbortSignal
-  /** 成员独立模型参数；由官方 Subagent 准入并持久化，不修改 Agent Loop。 */
-  readonly agentOptions?: AgentOptions
-  /** 成员工作目录；官方 WorkingDirectory Provider 校验，未提供时继承父会话。 */
-  readonly cwd?: string
 }
 
 /** Result after one teammate reaches a durable active or failed edge. */

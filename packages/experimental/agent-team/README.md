@@ -63,7 +63,7 @@ The roster shows every member with its role (`lead` or `teammate`) and current s
 
 Only the Lead can create teammates or interrupt them.
 
-Host callers can pass optional `agentOptions` and `cwd` to `spawnTeammate`. They are forwarded to the official continuation provider before the first request and stored in the child Session's existing descriptor, not new Team records. Omitting them preserves inherited model options and shared cwd. Enterprise worktree creation, step budgets and merge review belong to the [desktop adapter](../../../apps/nova-enterprise/README.md); Team does not create or merge worktrees itself.
+Host callers can pass optional `agentOptions` and `cwd` to `spawnTeammate`. The root Host export loads these runtime-only type extensions; `./client` keeps browser projections free of Host services. They are forwarded to the official continuation provider before the first request and stored in the child Session's existing descriptor, not new Team records. Omitting them preserves inherited model options and shared cwd. Enterprise worktree creation, step budgets and merge review belong to the [desktop adapter](../../../apps/nova-enterprise/README.md); Team does not create or merge worktrees itself.
 
 ### Messages between teammates
 

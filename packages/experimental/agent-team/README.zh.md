@@ -63,7 +63,7 @@ roster 显示每个成员的职责（`lead` 或 `teammate`）与当前状态：`
 
 只有 Lead 可以创建 teammate 或中断它们。
 
-Host 调用 `spawnTeammate` 时可传可选 `agentOptions` 和 `cwd`，在首次请求前交给官方 continuation Provider，存入子 Session 现有描述符，不增加 Team 持久记录。省略时保持模型参数继承与共享 cwd。企业工作树创建、步骤预算和合并审阅由[桌面适配器](../../../apps/nova-enterprise/README.zh.md)负责；Team 自身不创建或合并工作树。
+Host 调用 `spawnTeammate` 时可传可选 `agentOptions` 和 `cwd`；root Host 导出加载这些运行时专用类型扩展，`./client` 的浏览器投影不引入 Host 服务。这些参数在首次请求前交给官方 continuation Provider，存入子 Session 现有描述符，不增加 Team 持久记录。省略时保持模型参数继承与共享 cwd。企业工作树创建、步骤预算和合并审阅由[桌面适配器](../../../apps/nova-enterprise/README.zh.md)负责；Team 自身不创建或合并工作树。
 
 ### teammate 之间的消息
 

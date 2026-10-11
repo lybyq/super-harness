@@ -157,10 +157,16 @@ describe('publishableImage', () => {
     const outside = mkdtempSync(join(tmpdir(), 'dsh-doc-site-outside-'))
     roots.push(outside)
     writeFileSync(join(outside, 'secret.png'), 'not really a png\n')
-    symlinkSync(join(outside, 'secret.png'), join(root, 'packages/linked.png'))
-
-    expect(publishableImage(join(root, 'packages/linked.png'), realpathSync(root))).toBeUndefined()
-    expect(publishableImage(join(outside, 'secret.png'), realpathSync(root))).toBeUndefined()
+    const link = join(root, 'packages/linked')
+    // Windows junction 无需文件符号链接特权；两种平台仍检验真实路径越出仓库的同一拒绝行为。
+    symlinkSync(outside, link, process.platform === 'win32' ? 'junction' : 'dir')
+    try {
+      expect(publishableImage(join(link, 'secret.png'), realpathSync(root))).toBeUndefined()
+      expect(publishableImage(join(outside, 'secret.png'), realpathSync(root))).toBeUndefined()
+    } finally {
+      unlinkSync(link)
+    }
+    expect(readFileSync(join(outside, 'secret.png'), 'utf8')).toBe('not really a png\n')
   })
 
   it('refuses a directory', () => {

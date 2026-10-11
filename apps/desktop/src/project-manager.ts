@@ -22,6 +22,7 @@ import {
 import type { DesktopPaths } from './paths.ts'
 import type { DesktopRelease } from './release.ts'
 import { readDesktopRuntime } from './runtime-tree.ts'
+import { NOVA_COMMUNITY_PINS, NOVA_DESKTOP_BUNDLES } from './nova-community.ts'
 import {
   initProfile, PROFILE_TEMPLATES, removeLinkProjections, sanitizeProfile, type ProfileTemplate,
 } from '@deepseek-ai/dsh-app-boot'
@@ -139,12 +140,12 @@ export function createRuntimeProjectMetadata(projectDir: string, release: Deskto
     private: true,
     version: '0.0.0',
     dependencies: desktopCorePackageOverrides(packageSet),
-    dsh: { profile: { bundles: [...WEB_PROFILE.bundles] } },
+    dsh: { profile: { bundles: [...NOVA_DESKTOP_BUNDLES] } },
   }
   writeJson(join(projectDir, 'package.json'), manifest)
   writeFileSync(
     join(projectDir, 'pnpm-workspace.yaml'),
-    workspaceFile(desktopCorePackageOverrides(packageSet)),
+    workspaceFile({ ...NOVA_COMMUNITY_PINS, ...desktopCorePackageOverrides(packageSet) }),
     { mode: 0o600 },
   )
 }
@@ -164,13 +165,17 @@ export function createDevelopmentProjectMetadata(projectDir: string, release: De
       [DSH_PACKAGE]: release.version,
       [DESKTOP_HOST_PACKAGE]: release.version,
     },
-    dsh: { profile: { bundles: [...WEB_PROFILE.bundles] } },
+    dsh: { profile: { bundles: [...NOVA_DESKTOP_BUNDLES] } },
   }
   writeJson(join(projectDir, 'package.json'), manifest)
   writeFileSync(join(projectDir, 'pnpm-workspace.yaml'), workspaceFile(), { mode: 0o600 })
 }
 
-/** Create the first external plugin profile without running a package manager. */
-export function createPluginProfile(projectDir: string): void {
-  initProfile(projectDir, WEB_PROFILE.bundles)
+/**
+ * Create the first external plugin profile without running a package manager; existing files remain unchanged.
+ * @param projectDir - Desktop-owned profile directory.
+ * @param bundles - First-launch layers; official-only development previews can supply the Web template.
+ */
+export function createPluginProfile(projectDir: string, bundles: readonly string[] = NOVA_DESKTOP_BUNDLES): void {
+  initProfile(projectDir, bundles)
 }

@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.1-alpha.2/nova-catalog-without-status/guide.md
+/:
+  en: 42ff38b5eb426c2a
+  zh: 2271b52e4e770d35
+/nova-capability-summaries-omit-publication-status:
+  en: 4bbc5054b181adb9
+  zh: 1b82eb773783810c
+/nova-capability-summaries-omit-publication-status/change:
+  en: 575b6c97cb6fa33b
+  zh: a076c0a8217c0033
+/nova-capability-summaries-omit-publication-status/migration:
+  en: d6698d3529836057
+  zh: 24bc00974edae25a

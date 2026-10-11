@@ -1,0 +1,8 @@
+diff --git a/lib/client.js b/lib/client.js
+--- a/lib/client.js
++++ b/lib/client.js
+@@ -1299,2 +1299,4 @@
+ 		function reportDailyHeartbeat(items) {
++			// Nova: never send automatic usage heartbeats to public services.
++			return;
+ 			try {

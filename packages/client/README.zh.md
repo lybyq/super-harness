@@ -24,6 +24,8 @@ kind: "package-group"
 
 内核包负责启动与服务于页面，UI 功能包负责呈现页面。各包的 README 拥有自己的约定与配置。
 
+共享的[客户端构建器](tsdown.client.ts) 从 `packages/*/*/package.json` 和 `apps/*/package.json` 读取依赖及 `dsh.client` 声明。因此，应用自有插件可以使用相同的模块加载器工厂与外部模块检查，而无需复制浏览器外壳。
+
 | 包 | 职责 | ctx 键 |
 |---|---|---|
 | [`web/`](web/README.zh.md) | 启动浏览器外壳 | — |

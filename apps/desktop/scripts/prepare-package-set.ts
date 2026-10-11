@@ -26,6 +26,7 @@ import {
 import { capture } from '../../../scripts/release/process.ts'
 import { tarballFiles } from '../../../scripts/release/tarball.ts'
 import { resolveDesktopTargetBuildPaths } from './desktop-build-paths.mjs'
+import { NOVA_ENTERPRISE_PACKAGE, NOVA_ENTERPRISE_RUNTIME_FILES } from '../src/nova-community.ts'
 
 const DSH_PACKAGE = '@deepseek-ai/dsh'
 const ROOT_PACKAGES = [DSH_PACKAGE, DESKTOP_HOST_PACKAGE] as const
@@ -127,12 +128,25 @@ export function assertDesktopHostPackageFiles(files: readonly string[]): void {
   }
 }
 
+/**
+ * 检查私有 Nova npm 制品包含完整 Host 源码和已编译 Client，不能仅复制源码进内网。
+ * @param files tarball 中以 package/ 为根的文件路径列表。
+ * @returns 无返回值；缺少文件时在安装前拒绝交付。
+ */
+export function assertNovaEnterprisePackageFiles(files: readonly string[]): void {
+  const available = new Set(files)
+  const missing = NOVA_ENTERPRISE_RUNTIME_FILES.map(file => `package/${file}`).filter(file => !available.has(file))
+  if (missing.length > 0) throw new Error(`desktop package set: ${NOVA_ENTERPRISE_PACKAGE} tarball omits required file(s): ${missing.join(', ')}`)
+}
+
 /** Prepare a package set from release tarball directories. */
 export function prepareDesktopPackageSet(inputs: readonly string[], output: string): void {
   const selected = selectDesktopPackageClosure(packedPackages(inputs))
   const host = selected.find(packed => packed.manifest.name === DESKTOP_HOST_PACKAGE)
   if (host === undefined) throw new Error(`desktop package set: selected closure omits ${DESKTOP_HOST_PACKAGE}`)
   assertDesktopHostPackageFiles(tarballFiles(host.tarball))
+  const enterprise = selected.find(packed => packed.manifest.name === NOVA_ENTERPRISE_PACKAGE)
+  if (enterprise !== undefined) assertNovaEnterprisePackageFiles(tarballFiles(enterprise.tarball))
   rmSync(output, { recursive: true, force: true })
   const packageDir = join(output, DESKTOP_PACKAGES_DIR)
   mkdirSync(packageDir, { recursive: true })

@@ -88,7 +88,7 @@ function browserSourcePath(source: string, sourcemapPath: string): string {
   if (!source.startsWith('.')) return source
   const physicalSource = resolvePath(dirname(sourcemapPath), source)
   const repositoryPath = relative(REPOSITORY_ROOT, physicalSource).split(sep).join('/')
-  return repositoryPath.startsWith('packages/') ? `../../../${repositoryPath}` : source
+  return repositoryPath.startsWith('packages/') || repositoryPath.startsWith('apps/') ? `../../../${repositoryPath}` : source
 }
 
 /**
@@ -357,7 +357,8 @@ const clientExternalCache = new Map<string, ReadonlySet<string>>()
 function workspaceManifest(id: string): WorkspaceManifest {
   const cached = manifestCache.get(id)
   if (cached !== undefined) return cached
-  for (const manifestPath of globSync('packages/*/*/package.json', { cwd: REPOSITORY_ROOT })) {
+  // 应用自有插件与 packages 包使用同一模块表契约；仅允许工作区内已声明的包名。
+  for (const manifestPath of globSync(['packages/*/*/package.json', 'apps/*/package.json'], { cwd: REPOSITORY_ROOT })) {
     const manifest = JSON.parse(
       readFileSync(resolvePath(REPOSITORY_ROOT, manifestPath), 'utf8'),
     ) as WorkspaceManifest
@@ -365,7 +366,7 @@ function workspaceManifest(id: string): WorkspaceManifest {
     manifestCache.set(id, manifest)
     return manifest
   }
-  throw new Error(`tsdown: no packages/*/*/package.json declares the name ${id}`)
+  throw new Error(`tsdown: no workspace package manifest declares the name ${id}`)
 }
 
 /**

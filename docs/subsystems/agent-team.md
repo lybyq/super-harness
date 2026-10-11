@@ -8,6 +8,8 @@ Types shared by the experimental implicit-root Team domain, model tools, and hos
 
 `TeamId` is the root `SessionId` under a distinct [brand](core.md#branded-ids). `TeamTaskId` is allocated as `task-<n>`. New sends return the target inbox `MessageId`; `TeamMessageId` is retained only for historical mailbox records. Teammate names are immutable labels.
 
+The Host-only `SpawnTeammateRequest.agentOptions` and `.cwd` creation options flow into the official subagent provider and the child Session descriptor. They do not change any durable Team snapshot below. Without them, the original model inheritance and shared checkout remain unchanged; the [enterprise adapter](../../apps/nova-enterprise/README.md) owns worktree and budget policy.
+
 ```ts type-equiv
 /** Whole durable value written on every teammate lifecycle change. */
 interface TeamMemberSnapshot {

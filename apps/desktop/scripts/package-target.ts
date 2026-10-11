@@ -24,6 +24,7 @@ import { suggestDesktopBuildVersion } from './desktop-build-version-discovery.ts
 import { desktopBuildCommitEnvironment, readDesktopBuildCommit, resolveDesktopBuildCommit } from './desktop-build-commit.mjs'
 import { requireDesktopToolchain } from './desktop-toolchain-preflight.ts'
 import { withMacOSNotarizationProxy } from './macos-notarization-proxy.ts'
+import { configureDevelopmentStorage } from './development-storage.mjs'
 
 const APP_ROOT = resolve(import.meta.dirname, '..')
 const REPOSITORY_ROOT = resolve(APP_ROOT, '..', '..')
@@ -334,6 +335,7 @@ async function main(): Promise<void> {
   const environment = target.platform === 'darwin' && invocation.unsigned
     ? localMacOSPackageEnvironment()
     : loadDesktopPackageEnvironment(target.platform)
+  configureDevelopmentStorage(join(APP_ROOT, '.desktop-build'), environment)
   const productVersion = packageVersion(join(APP_ROOT, 'package.json'), 'desktop package')
   // Release settings come from the target dotenv file alone, so the version this run publishes is an
   // argument; the environment variable below only carries it to the child processes that build.
@@ -463,6 +465,10 @@ export async function packageTarget(
     'pack',
     '--pack-destination',
     buildPaths.packedDsh,
+  ], buildEnv, REPOSITORY_ROOT)
+  // Nova 是私有应用包，不在公开 release:pack 家族中，必须显式随桌面打包。
+  await execute([
+    '--dir', 'apps/nova-enterprise', 'pack', '--pack-destination', buildPaths.packedDsh,
   ], buildEnv, REPOSITORY_ROOT)
   await execute(['run', 'release:pack', '--family', 'vendor', '--out', buildPaths.packedVendor, ...packArguments], buildEnv, REPOSITORY_ROOT)
   rmSync(buildPaths.packedLandlock, { recursive: true, force: true })

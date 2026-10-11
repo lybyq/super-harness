@@ -1,0 +1,37 @@
+# Bilingual-pair consistency record for nova-intranet-acceptance.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/nova-intranet-acceptance.md
+/harness-desktop-implementation-and-intranet-handoff:
+  en: 8c819abaaf365e24
+  zh: 3505285bff5d8900
+/harness-desktop-implementation-and-intranet-handoff/implementation-boundary:
+  en: dbd8f6d234df74d2
+  zh: a6bf7056279e8f08
+/harness-desktop-implementation-and-intranet-handoff/implemented-features:
+  en: 5a7535b4ae931cc7
+  zh: 1b799fe26cc69332
+/harness-desktop-implementation-and-intranet-handoff/transfer-sources-and-artifacts:
+  en: 16481010809a6711
+  zh: 0a8c7b84c1c71eab
+/harness-desktop-implementation-and-intranet-handoff/deployment-owned-settings:
+  en: fd8fdc69c12be28a
+  zh: ac44a0f621a6887a
+/harness-desktop-implementation-and-intranet-handoff/exact-adaptation-for-six-mcp-packages:
+  en: 631b10a27e573447
+  zh: cd32307fc66bf5df
+/harness-desktop-implementation-and-intranet-handoff/migrate-default-role-mappings:
+  en: 9f1a4ab3af2cb5ab
+  zh: befb710a91819504
+/harness-desktop-implementation-and-intranet-handoff/local-regression-commands:
+  en: 30ef97a6cdcaa7b0
+  zh: 30e5f33bc56897bf
+/harness-desktop-implementation-and-intranet-handoff/local-evidence-recorded-on-2026-10-11:
+  en: e0b4a871892ba85d
+  zh: b086c086cf5074e8
+/harness-desktop-implementation-and-intranet-handoff/intranet-acceptance-checklist:
+  en: 11692068886c4d3a
+  zh: cac6abc8ac136bc2
+/harness-desktop-implementation-and-intranet-handoff/explicit-non-goals:
+  en: 000f2c68781b1a2e
+  zh: 641f93775ba85c6f

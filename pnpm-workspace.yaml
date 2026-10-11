@@ -15,6 +15,26 @@ packages:
   - python/sdk-runtime
 
 overrides:
+  '@linxin666/dsh-web-all': '0.4.5'
+  '@linxin666/dsh-client-ui-plugin-manager': '0.4.5'
+  '@linxin666/dsh-client-ui-market': '0.4.5'
+  '@linxin666/dsh-client-ui-task-board': '0.4.5'
+  '@linxin666/dsh-client-ui-task-board-github': '0.4.5'
+  '@linxin666/dsh-client-ui-git-graph': '0.4.5'
+  '@linxin666/dsh-remote-web-ui': '0.4.5'
+  '@linxin666/dsh-update': '0.4.5'
+  '@linxin666/dsh-ssh': '0.4.5'
+  '@linxin666/dsh-liangshen': '0.4.5'
+  '@linxin666/dsh-client-ui-skill-explorer': '0.4.5'
+  '@linxin666/dsh-usage': '0.4.5'
+  '@linxin666/dsh-session-archive': '0.4.5'
+  '@linxin666/dsh-client-ui-model-capabilities': '0.4.5'
+  '@linxin666/dsh-client-ui-web-ui-settings': '0.4.5'
+  '@linxin666/dsh-i18n': '0.4.5'
+  '@linxin666/dsh-client-ui-community-plugins': '0.4.5'
+  '@linxin666/dsh-client-ui-preset-center': '0.4.5'
+  '@linxin666/dsh-client-ui-skin-center': '0.4.5'
+  '@linxin666/dsh-pet': '0.4.5'
   'extract-zip>yauzl': '3.4.0'
   '@deepseek-ai/cosmokit': 'link:vendor/cosmokit'
   '@deepseek-ai/schemastery': 'link:vendor/schemastery'
@@ -106,6 +126,18 @@ minimumReleaseAgeExclude:
   # Desktop packaging requires this Electron fingerprint with node-addon-require-builtin 0.1.9.
   - electron@44.7.0
 patchedDependencies:
+  '@linxin666/dsh-client-ui-git-graph@0.4.5': patches/@linxin666__dsh-client-ui-git-graph@0.4.5.patch
+  '@linxin666/dsh-client-ui-market@0.4.5': patches/@linxin666__dsh-client-ui-market@0.4.5.patch
+  '@linxin666/dsh-client-ui-plugin-manager@0.4.5': patches/@linxin666__dsh-client-ui-plugin-manager@0.4.5.patch
+  '@linxin666/dsh-client-ui-skill-explorer@0.4.5': patches/@linxin666__dsh-client-ui-skill-explorer@0.4.5.patch
+  '@linxin666/dsh-client-ui-skin-center@0.4.5': patches/@linxin666__dsh-client-ui-skin-center@0.4.5.patch
+  '@linxin666/dsh-client-ui-task-board@0.4.5': patches/@linxin666__dsh-client-ui-task-board@0.4.5.patch
+  '@linxin666/dsh-client-ui-web-ui-settings@0.4.5': patches/@linxin666__dsh-client-ui-web-ui-settings@0.4.5.patch
+  '@linxin666/dsh-pet@0.4.5': patches/@linxin666__dsh-pet@0.4.5.patch
+  '@linxin666/dsh-remote-web-ui@0.4.5': patches/@linxin666__dsh-remote-web-ui@0.4.5.patch
+  '@linxin666/dsh-ssh@0.4.5': patches/@linxin666__dsh-ssh@0.4.5.patch
+  '@linxin666/dsh-update@0.4.5': patches/@linxin666__dsh-update@0.4.5.patch
+  '@linxin666/dsh-web-all@0.4.5': patches/@linxin666__dsh-web-all@0.4.5.patch
   '@earendil-works/pi-ai@1.0.2': patches/@earendil-works__pi-ai@1.0.2.patch
   '@electron/osx-sign@1.3.3': patches/@electron__osx-sign@1.3.3.patch
   '@fortune-sheet/core@1.0.4': patches/@fortune-sheet__core@1.0.4.patch

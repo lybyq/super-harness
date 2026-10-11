@@ -48,6 +48,7 @@ External packages installed for runtime use or distributed inside the prebuilt b
 | [`@lexical/plain-text`](https://github.com/facebook/lexical) | MIT |
 | [`@lexical/text`](https://github.com/facebook/lexical) | MIT |
 | [`@lexical/utils`](https://github.com/facebook/lexical) | MIT |
+| [`@linxin666/dsh-web-all`](https://github.com/zhu1090093659/dsh-web) | Apache-2.0 |
 | [`@modelcontextprotocol/client`](https://github.com/modelcontextprotocol/typescript-sdk) | MIT |
 | [`@modelcontextprotocol/sdk`](https://github.com/modelcontextprotocol/typescript-sdk) | MIT |
 | [`@noble/hashes`](https://github.com/paulmillr/noble-hashes) | MIT |
@@ -141,6 +142,18 @@ External packages installed for runtime use or distributed inside the prebuilt b
 
 pnpm applies local patches to the following packages at install time, so shipped artifacts carry modified copies; each patch file is the complete record of the modification:
 
+- `@linxin666/dsh-client-ui-git-graph@0.4.5` — [`patches/@linxin666__dsh-client-ui-git-graph@0.4.5.patch`](patches/@linxin666__dsh-client-ui-git-graph@0.4.5.patch)
+- `@linxin666/dsh-client-ui-market@0.4.5` — [`patches/@linxin666__dsh-client-ui-market@0.4.5.patch`](patches/@linxin666__dsh-client-ui-market@0.4.5.patch)
+- `@linxin666/dsh-client-ui-plugin-manager@0.4.5` — [`patches/@linxin666__dsh-client-ui-plugin-manager@0.4.5.patch`](patches/@linxin666__dsh-client-ui-plugin-manager@0.4.5.patch)
+- `@linxin666/dsh-client-ui-skill-explorer@0.4.5` — [`patches/@linxin666__dsh-client-ui-skill-explorer@0.4.5.patch`](patches/@linxin666__dsh-client-ui-skill-explorer@0.4.5.patch)
+- `@linxin666/dsh-client-ui-skin-center@0.4.5` — [`patches/@linxin666__dsh-client-ui-skin-center@0.4.5.patch`](patches/@linxin666__dsh-client-ui-skin-center@0.4.5.patch)
+- `@linxin666/dsh-client-ui-task-board@0.4.5` — [`patches/@linxin666__dsh-client-ui-task-board@0.4.5.patch`](patches/@linxin666__dsh-client-ui-task-board@0.4.5.patch)
+- `@linxin666/dsh-client-ui-web-ui-settings@0.4.5` — [`patches/@linxin666__dsh-client-ui-web-ui-settings@0.4.5.patch`](patches/@linxin666__dsh-client-ui-web-ui-settings@0.4.5.patch)
+- `@linxin666/dsh-pet@0.4.5` — [`patches/@linxin666__dsh-pet@0.4.5.patch`](patches/@linxin666__dsh-pet@0.4.5.patch)
+- `@linxin666/dsh-remote-web-ui@0.4.5` — [`patches/@linxin666__dsh-remote-web-ui@0.4.5.patch`](patches/@linxin666__dsh-remote-web-ui@0.4.5.patch)
+- `@linxin666/dsh-ssh@0.4.5` — [`patches/@linxin666__dsh-ssh@0.4.5.patch`](patches/@linxin666__dsh-ssh@0.4.5.patch)
+- `@linxin666/dsh-update@0.4.5` — [`patches/@linxin666__dsh-update@0.4.5.patch`](patches/@linxin666__dsh-update@0.4.5.patch)
+- `@linxin666/dsh-web-all@0.4.5` — [`patches/@linxin666__dsh-web-all@0.4.5.patch`](patches/@linxin666__dsh-web-all@0.4.5.patch)
 - `@earendil-works/pi-ai@1.0.2` — [`patches/@earendil-works__pi-ai@1.0.2.patch`](patches/@earendil-works__pi-ai@1.0.2.patch)
 - `@electron/osx-sign@1.3.3` — [`patches/@electron__osx-sign@1.3.3.patch`](patches/@electron__osx-sign@1.3.3.patch)
 - `@fortune-sheet/core@1.0.4` — [`patches/@fortune-sheet__core@1.0.4.patch`](patches/@fortune-sheet__core@1.0.4.patch)

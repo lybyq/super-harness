@@ -9,6 +9,7 @@ import yaml from 'js-yaml'
 import { pnpmCommand } from '../../../scripts/release/process.ts'
 import { prepareRuntimePatches, verifyRuntimePatches } from '../scripts/prepare-runtime-patches.ts'
 import type { DesktopRuntimePatch } from '../scripts/runtime-patch-policy.ts'
+import { NOVA_COMMUNITY_PATCH_PACKAGES } from '../src/nova-community.ts'
 
 const roots: string[] = []
 const shared = { scope: 'shared', reason: 'Runtime fixture.' } as const
@@ -42,7 +43,10 @@ it('classifies the current workspace and shares only runtime patch bytes', () =>
   const repository = resolve(import.meta.dirname, '../../..')
   const before = readFileSync(join(repository, 'pnpm-lock.yaml'))
   const plan = prepareRuntimePatches(project, repository)
-  expect(plan.patches.map(entry => entry.spec)).toEqual(['@earendil-works/pi-ai@1.0.2', 'node-pty@1.2.0-beta.15'])
+  expect(plan.patches.map(entry => entry.spec)).toEqual([
+    ...NOVA_COMMUNITY_PATCH_PACKAGES.map(name => `${name}@0.4.5`),
+    '@earendil-works/pi-ai@1.0.2', 'node-pty@1.2.0-beta.15',
+  ])
   expect(plan.workspaceOnly).toHaveLength(5)
   const settings = yaml.load(readFileSync(join(project, 'pnpm-workspace.yaml'), 'utf8')) as { overrides: Record<string, string> }
   expect(settings.overrides['@earendil-works/pi-ai']).toBeUndefined()

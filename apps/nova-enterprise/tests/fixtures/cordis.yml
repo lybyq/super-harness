@@ -1,0 +1,17 @@
+# 真正的官方组合入口：工具、Skill、连接、凭据和 Hub 插件由 Loader 装配。
+- id: system-prompt
+  name: ../../../../packages/core/system-prompt/lib/index.js
+- id: tools
+  name: ../../../../packages/core/tools/lib/index.js
+- id: skills
+  name: ../../../../packages/skill/skill/lib/index.js
+- id: test-host
+  name: ./host.mjs
+- id: enterprise
+  name: ../../src/index.ts
+  config:
+    apiBaseUrl: !!js process.env.HARNESS_TEST_HUB_URL ?? ''
+    allowInsecureHttp: true
+    engineEntry: !!js process.env.HARNESS_TEST_ENGINE_ENTRY ?? ''
+    deploymentFile: !!js process.env.HARNESS_TEST_DEPLOYMENT_FILE ?? ''
+    resourceHome: !!js process.env.HARNESS_TEST_RESOURCE_HOME ?? ''

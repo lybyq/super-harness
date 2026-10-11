@@ -1,0 +1,27 @@
+# Desktop-only deployment defaults, applied after the community bundle.
+# User profile overrides can opt in; these defaults are not network access controls.
+- insert:
+    - id: nova-enterprise
+      name: '@deepseek-ai/dsh-nova-enterprise'
+      # 企业地址由部署统一注入；未配置时只提示管理员，不向用户索要地址或密钥。
+      config:
+        apiBaseUrl: !!js process.env.NOVA_HUB_API_URL ?? ''
+        authentication: !!js process.env.NOVA_HUB_AUTH_MODE ?? 'none'
+        allowInsecureHttp: !!js process.env.NOVA_HUB_ALLOW_HTTP === 'true'
+        engineEntry: !!js process.env.HARNESS_ENGINE_ENTRY ?? ''
+        deploymentFile: !!js process.env.NOVA_DEPLOYMENT_CONFIG ?? ''
+        resourceHome: !!js process.env.HARNESS_DESKTOP_RESOURCE_HOME ?? ''
+        allowPublishing: !!js process.env.HARNESS_ALLOW_PUBLISHING === 'true'
+        # Windows 默认在读取时原子迁移企业配置；密文绑定用户，不能跨机器复制凭据。
+        secretProtection: !!js >-
+          process.env.HARNESS_SECRET_PROTECTION ?? (process.platform === 'win32' ? 'windows-dpapi' : 'none')
+- id: web-ui-market
+  disabled: true
+- id: web-ui-community-plugins
+  disabled: true
+- id: web-ui-remote-web-ui
+  disabled: true
+- id: web-ui-update
+  disabled: true
+- id: web-ui-task-board-github
+  disabled: true

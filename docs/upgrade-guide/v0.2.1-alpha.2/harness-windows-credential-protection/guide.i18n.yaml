@@ -1,0 +1,16 @@
+# Bilingual-pair consistency record for guide.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/upgrade-guide/v0.2.1-alpha.2/harness-windows-credential-protection/guide.md
+/:
+  en: f796796db8ec7269
+  zh: 0dc40b53ed56bd82
+/windows-enterprise-credential-protection:
+  en: 9e15504b18908c0e
+  zh: 432d3b8316b45949
+/windows-enterprise-credential-protection/change:
+  en: e0621ebfdb51c933
+  zh: b5e8680f08e5050a
+/windows-enterprise-credential-protection/migration:
+  en: 1d99db576894c6c1
+  zh: 6f7e79030fda9e18

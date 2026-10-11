@@ -1,0 +1,28 @@
+# Bilingual-pair consistency record for nova-community-integration.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/nova-community-integration.md
+/nova-community-integration-inventory:
+  en: 1103e31744184d65
+  zh: 914f6e23a32a5301
+/nova-community-integration-inventory/release-evidence:
+  en: deb2e93c4f1a8b22
+  zh: 0c9e1701486f6f24
+/nova-community-integration-inventory/complete-dependency-inventory:
+  en: f458a3c767d13939
+  zh: 66df42131c1199ee
+/nova-community-integration-inventory/more-than-cosmetic-extensions:
+  en: 94c5d71a3909d2e5
+  zh: bf23388334426869
+/nova-community-integration-inventory/workshop-plugins-and-obsolete-exports:
+  en: fc656d856a148ad2
+  zh: 2befa1d307a41762
+/nova-community-integration-inventory/intranet-inclusion-and-policy:
+  en: 3d96f34d173f0507
+  zh: f3ac8f11b8aa419f
+/nova-community-integration-inventory/nova-feature-boundary:
+  en: 186d09e42c1612c2
+  zh: 998041b4bea4251d
+/nova-community-integration-inventory/verification-status:
+  en: 6c1c3122c997fb87
+  zh: 5baff0c89643cecc

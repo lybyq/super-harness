@@ -1,0 +1,11 @@
+# 产物组合只加载 lib/index.js，不依赖 TS Loader 或 src/ 入口。
+- id: system-prompt
+  name: ../../../../packages/core/system-prompt/lib/index.js
+- id: tools
+  name: ../../../../packages/core/tools/lib/index.js
+- id: skills
+  name: ../../../../packages/skill/skill/lib/index.js
+- id: test-host
+  name: ./host.mjs
+- id: enterprise
+  name: ../../lib/index.js

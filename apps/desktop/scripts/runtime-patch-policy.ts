@@ -1,5 +1,7 @@
 /** Desktop-specific selection of workspace and runtime-only dependency patches. */
 
+import { NOVA_COMMUNITY_PATCH_PACKAGES } from '../src/nova-community.ts'
+
 /** A patch shared with the workspace, excluded from runtime installation, or supplied only to Desktop. */
 export type DesktopRuntimePatch =
   | { scope: 'shared'; reason: string }
@@ -8,6 +10,9 @@ export type DesktopRuntimePatch =
 
 /** Every workspace patch requires an explicit Desktop decision; runtime-only entries may add or replace a patch. */
 export const DESKTOP_RUNTIME_PATCHES: Readonly<Record<string, DesktopRuntimePatch>> = {
+  ...Object.fromEntries(NOVA_COMMUNITY_PATCH_PACKAGES.map(name => [`${name}@0.4.5`, {
+    scope: 'shared' as const, reason: 'Nova disables automatic public usage heartbeats; aggregate client rows fail closed.',
+  }])),
   '@earendil-works/pi-ai@1.0.2': { scope: 'shared', reason: 'Runtime providers need the streamed argument parsing fix.' },
   '@electron/osx-sign@1.3.3': { scope: 'workspace-only', reason: 'Signing executes on the build host.' },
   '@fortune-sheet/core@1.0.4': { scope: 'workspace-only', reason: 'Patched spreadsheet code is embedded in the client bundle.' },

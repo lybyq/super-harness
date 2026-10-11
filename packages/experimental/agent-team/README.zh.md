@@ -63,6 +63,8 @@ roster 显示每个成员的职责（`lead` 或 `teammate`）与当前状态：`
 
 只有 Lead 可以创建 teammate 或中断它们。
 
+Host 调用 `spawnTeammate` 时可传可选 `agentOptions` 和 `cwd`，在首次请求前交给官方 continuation Provider，存入子 Session 现有描述符，不增加 Team 持久记录。省略时保持模型参数继承与共享 cwd。企业工作树创建、步骤预算和合并审阅由[桌面适配器](../../../apps/nova-enterprise/README.zh.md)负责；Team 自身不创建或合并工作树。
+
 ### teammate 之间的消息
 
 任何成员都可向其他成员或 Lead 发送消息。每次尝试要么返回目标 inbox 的 `MessageId`，要么抛出错误。Team 不保留尚未接收的发送意图，不在重启后重试新消息，也不对显式重发去重。
@@ -200,7 +202,7 @@ Peer 消息追加在 target 可复用历史前缀之后。冷恢复会先复用�
 
 - **完整视图广播** — 每次 roster 或任务变化都会把完整 roster 和未删除任务板（含描述）发给所有已连接浏览器，即使它正在查看其他 Session。
 - **实验原型，无稳定性承诺**——本包公开发布，但孵化期间约定仍可自由变更。
-- **单进程、共享 checkout**——成员共享 cwd，修改立即可见；本包不提供 worktree、远端成员、merge 或文件锁。
+- **单进程、默认共享 checkout**——Host 可显式传子会话 cwd；本包不提供 worktree 创建、远端成员、merge 或文件锁。
 - **write scope 仅作提示**——Bash、formatter、代码生成器与直接外部写入可以绕过文件版本检查；Lead 必须协调 owner 并检查最终 diff。
 - **扁平且不可变的 roster**——只有 Lead 可以创建直接 teammate；不支持嵌套 Team、重命名、删除或名字复用。
 - **不会自动释放 owner**——成员不活动、interrupt、进程退出与工作失败都不会释放任务 owner。

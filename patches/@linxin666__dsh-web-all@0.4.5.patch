@@ -1,0 +1,55 @@
+diff --git a/lib/client.js b/lib/client.js
+--- a/lib/client.js
++++ b/lib/client.js
+@@ -710,2 +710,4 @@
+ 		function reportDailyHeartbeat$8(items) {
++			// Nova: never send automatic usage heartbeats to public services.
++			return;
+ 			try {
+@@ -1790,2 +1792,4 @@
+ 		function reportDailyHeartbeat$7(items) {
++			// Nova: never send automatic usage heartbeats to public services.
++			return;
+ 			try {
+@@ -4588,2 +4592,4 @@
+ 		function reportDailyHeartbeat$6(items) {
++			// Nova: never send automatic usage heartbeats to public services.
++			return;
+ 			try {
+@@ -15920,2 +15926,4 @@
+ 		function reportDailyHeartbeat$5(items) {
++			// Nova: never send automatic usage heartbeats to public services.
++			return;
+ 			try {
+@@ -21497,2 +21505,4 @@
+ 		function reportDailyHeartbeat$4(items) {
++			// Nova: never send automatic usage heartbeats to public services.
++			return;
+ 			try {
+@@ -25855,2 +25865,4 @@
+ 		function reportDailyHeartbeat$3(items) {
++			// Nova: never send automatic usage heartbeats to public services.
++			return;
+ 			try {
+@@ -28065,2 +28077,4 @@
+ 		function reportDailyHeartbeat$2(items) {
++			// Nova: never send automatic usage heartbeats to public services.
++			return;
+ 			try {
+@@ -44571,2 +44585,4 @@
+ 		function reportDailyHeartbeat$1(items) {
++			// Nova: never send automatic usage heartbeats to public services.
++			return;
+ 			try {
+@@ -48109,2 +48125,4 @@
+ 		function reportDailyHeartbeat(items) {
++			// Nova: never send automatic usage heartbeats to public services.
++			return;
+ 			try {
+@@ -54827,2 +54845,6 @@
+ 			const active = await fetchActiveRows();
++			if (active === void 0) {
++				console.error("[Nova] Community row state unavailable; family UI remains disabled. Restart the desktop after the Host is healthy.");
++				return;
++			}
+ 			const own = ownClientEntryIds();

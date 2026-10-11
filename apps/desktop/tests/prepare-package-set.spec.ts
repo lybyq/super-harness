@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import {
   assertDesktopHostPackageFiles,
+  assertNovaEnterprisePackageFiles,
   selectDesktopPackageClosure,
   type PackedDesktopPackage,
 } from '../scripts/prepare-package-set.ts'
+import { NOVA_ENTERPRISE_PACKAGE, NOVA_ENTERPRISE_RUNTIME_FILES } from '../src/nova-community.ts'
 
 function packed(name: string, manifest: Record<string, unknown> = {}): PackedDesktopPackage {
   return { tarball: `${name}.tgz`, manifest: { name, version: '1.0.0', ...manifest } }
@@ -78,10 +80,11 @@ describe('desktop package-set selection', () => {
     ])
   })
 
-  it('requires both Desktop Host and public CLI entries', () => {
+  it('requires Desktop Host, public CLI, and intranet deployment defaults', () => {
     const files = [
       'package/lib/index.js',
       'package/lib/cli.js',
+      'package/nova.enterprise.patch.yml',
     ]
     expect(() => {
       assertDesktopHostPackageFiles(files)
@@ -90,5 +93,25 @@ describe('desktop package-set selection', () => {
       assertDesktopHostPackageFiles(files.slice(1))
     }).toThrow(/lib\/index\.js/u)
     expect(() => { assertDesktopHostPackageFiles(files.slice(0, 1)) }).toThrow(/lib\/cli\.js/u)
+    expect(() => { assertDesktopHostPackageFiles(files.slice(0, 2)) }).toThrow(/nova\.enterprise\.patch\.yml/u)
+  })
+
+  it('将 Nova 私有插件纳入 Host 的本地制品闭包，缺包时不退回公网安装', () => {
+    const available = new Map<string, PackedDesktopPackage>([
+      ['@deepseek-ai/dsh', packed('@deepseek-ai/dsh')],
+      ['@deepseek-ai/dsh-desktop-host', packed('@deepseek-ai/dsh-desktop-host', { dependencies: { [NOVA_ENTERPRISE_PACKAGE]: '1.0.0' } })],
+      [NOVA_ENTERPRISE_PACKAGE, packed(NOVA_ENTERPRISE_PACKAGE)],
+    ])
+    expect(selectDesktopPackageClosure(available).map(entry => entry.manifest.name)).toContain(NOVA_ENTERPRISE_PACKAGE)
+    available.delete(NOVA_ENTERPRISE_PACKAGE)
+    expect(() => selectDesktopPackageClosure(available)).toThrow(/unpacked package.*dsh-nova-enterprise/u)
+  })
+
+  it('Nova 制品需要完整 ESM 与 Client，缺少任意必需文件都拒绝交付', () => {
+    const files = NOVA_ENTERPRISE_RUNTIME_FILES.map(file => `package/${file}`)
+    expect(() => assertNovaEnterprisePackageFiles(files)).not.toThrow()
+    for (const omitted of files) {
+      expect(() => assertNovaEnterprisePackageFiles(files.filter(file => file !== omitted))).toThrow(/tarball omits required file/u)
+    }
   })
 })

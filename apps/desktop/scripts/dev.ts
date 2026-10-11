@@ -11,6 +11,10 @@ import { developmentRuntimeDirectory, resolveDesktopBuildTarget } from './deskto
 import { prepareDevelopmentProject } from './development-project.ts'
 import { prepareDevelopmentApp } from './development-app.ts'
 import { preparePrimaryRuntime } from './prepare-primary-runtime.ts'
+import { createPluginProfile } from '../src/project-manager.ts'
+import { resolveDesktopPaths } from '../src/paths.ts'
+import { PROFILE_TEMPLATES, type ProfileTemplate } from '@deepseek-ai/dsh-app-boot'
+import { configureDevelopmentStorage } from './development-storage.mjs'
 
 const APP_ROOT = resolve(import.meta.dirname, '..')
 const REPOSITORY_ROOT = resolve(APP_ROOT, '..', '..')
@@ -56,7 +60,7 @@ async function runPackageScript(script: string, cwd: string): Promise<void> {
   await run(process.execPath, [packageManager, 'run', script], cwd)
 }
 
-async function launchElectron(): Promise<void> {
+async function launchElectron(projectDir: string): Promise<void> {
   const require = createRequire(import.meta.url)
   const electron: unknown = require('electron')
   if (typeof electron !== 'string') throw new Error('desktop development: electron executable is unavailable')
@@ -68,6 +72,7 @@ async function launchElectron(): Promise<void> {
   const environment: NodeJS.ProcessEnv = {
     ...process.env,
     DSH_HOME: home,
+    DSH_DESKTOP_DSH_DIR: process.env.DSH_DESKTOP_DSH_DIR ?? projectDir,
     DSH_DESKTOP_PRIMARY_RUNTIME_DIR: process.env.DSH_DESKTOP_PRIMARY_RUNTIME_DIR ?? developmentRuntimeDirectory(),
     DSH_DESKTOP_HOST_INSPECT_PORT: String(hostPort),
     DSH_DESKTOP_OPEN_DEVTOOLS: process.env.DSH_DESKTOP_OPEN_DEVTOOLS ?? '1',
@@ -91,7 +96,12 @@ async function launchElectron(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  const { values } = parseArgs({ options: { 'skip-build': { type: 'boolean', default: false } } })
+  configureDevelopmentStorage(BUILD_ROOT)
+  const { values } = parseArgs({ options: {
+    'skip-build': { type: 'boolean', default: false },
+    'reuse-runtime': { type: 'boolean', default: false },
+    official: { type: 'boolean', default: false },
+  } })
   if (!values['skip-build']) {
     await runPackageScript('build', REPOSITORY_ROOT)
     await runPackageScript('build', APP_ROOT)
@@ -112,16 +122,30 @@ async function main(): Promise<void> {
       { encoding: 'utf8', env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } }).trim(),
     pnpmVersion,
   }
+  const projectDir = join(DEVELOPMENT_ROOT, values.official ? 'official-project' : 'project')
   prepareDevelopmentProject({
-    projectDir: join(DEVELOPMENT_ROOT, 'project'),
+    projectDir,
     cliDir: join(REPOSITORY_ROOT, 'apps', 'cli'),
     hostDir: join(REPOSITORY_ROOT, 'apps', 'desktop-host'),
     dependencyDir: join(REPOSITORY_ROOT, 'node_modules', '.pnpm', 'node_modules'),
     release,
     target: resolveDesktopBuildTarget(),
   })
-  await preparePrimaryRuntime()
-  await launchElectron()
+  if (values['reuse-runtime']) {
+    const runtime = process.env.DSH_DESKTOP_PRIMARY_RUNTIME_DIR ?? developmentRuntimeDirectory()
+    if (!existsSync(join(runtime, 'runtime.json'))) {
+      throw new Error(`desktop development: prepared runtime missing at ${runtime}; remove --reuse-runtime to prepare it`)
+    }
+  } else await preparePrimaryRuntime()
+  if (values.official && process.env.DSH_HOME === undefined) {
+    process.env.DSH_HOME = join(DEVELOPMENT_ROOT, 'official-home')
+    process.env.DSH_DESKTOP_USER_DATA_DIR ??= join(DEVELOPMENT_ROOT, 'official-electron-user-data')
+  }
+  createPluginProfile(
+    resolveDesktopPaths(resolve(process.env.DSH_HOME ?? join(DEVELOPMENT_ROOT, 'home'))).profile,
+    values.official ? (PROFILE_TEMPLATES.web as ProfileTemplate).bundles : undefined,
+  )
+  await launchElectron(projectDir)
 }
 
 await main().catch((error: unknown) => {

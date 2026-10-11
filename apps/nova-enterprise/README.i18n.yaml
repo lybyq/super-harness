@@ -1,0 +1,52 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write apps/nova-enterprise/README.md
+/:
+  en: c6dee8d8d50e5909
+  zh: 12138ae27bb29b2e
+/deepseek-ai-dsh-nova-enterprise:
+  en: 7348dcadb845cdf8
+  zh: 9022b4ce42382f36
+/deepseek-ai-dsh-nova-enterprise/summary:
+  en: 58e67180ad129a88
+  zh: eb256c5b58de2887
+/deepseek-ai-dsh-nova-enterprise/table-of-contents:
+  en: 23386452a66b2fbd
+  zh: be35274b7631f6a2
+/deepseek-ai-dsh-nova-enterprise/use-this-package:
+  en: 6f460b481ea8cf07
+  zh: 44709250acf6b237
+/deepseek-ai-dsh-nova-enterprise/use-this-package/when-to-choose-it:
+  en: ae4782db024f054c
+  zh: d6afc79d97f5c59d
+/deepseek-ai-dsh-nova-enterprise/use-this-package/minimal-configuration:
+  en: 29abf1a32be276a6
+  zh: 00a1bb3d5b52f045
+/deepseek-ai-dsh-nova-enterprise/use-this-package/configure-capabilities-in-the-desktop:
+  en: b03b9f250c29fdc0
+  zh: 76eda58d2dbb1bd8
+/deepseek-ai-dsh-nova-enterprise/use-this-package/create-and-publish-resources:
+  en: 68c44a8e016d0784
+  zh: 40272cf372ae607f
+/deepseek-ai-dsh-nova-enterprise/use-this-package/preview-roles:
+  en: 31967e7f26eac262
+  zh: 51ad77a4e9178cf8
+/deepseek-ai-dsh-nova-enterprise/understand-the-implementation:
+  en: 1359ee23bd955f4a
+  zh: 224214dfebd2e870
+/deepseek-ai-dsh-nova-enterprise/further-exploration:
+  en: 7ede926925780794
+  zh: 28c7f5d3656851fa
+/deepseek-ai-dsh-nova-enterprise/model-experience:
+  en: bbb12896ebc79f28
+  zh: 02641a3bd716cedf
+/deepseek-ai-dsh-nova-enterprise/model-experience/kv-cache-effect:
+  en: cb3a8de1ae18b48c
+  zh: 0b6c8de7245761cf
+/deepseek-ai-dsh-nova-enterprise/known-limitations-and-deferred-work:
+  en: 698f47e3dd46f018
+  zh: 15cceb0bfe17656b
+/deepseek-ai-dsh-nova-enterprise/known-limitations-and-deferred-work/dev-note:
+  en: fcb46b5a652aeee4
+  zh: e17d0b6cf85fec8a

@@ -8,6 +8,8 @@
 
 `TeamId` 是使用独立[品牌类型](core.zh.md#branded-ids)的 root `SessionId`。`TeamTaskId` 按 `task-<n>` 分配。新发送返回目标 inbox 的 `MessageId`；`TeamMessageId` 仅供历史 mailbox 记录保留。teammate 名称是不可变标签。
 
+仅 Host 使用的创建参数 `SpawnTeammateRequest.agentOptions`、`.cwd` 交给官方子智能体 Provider 和子 Session 描述符，不改变以下任何 Team 持久快照。省略时保持原模型继承和共享 checkout；[企业适配器](../../apps/nova-enterprise/README.zh.md)拥有工作树及预算策略。
+
 ```ts type-equiv
 /** Whole durable value written on every teammate lifecycle change. */
 interface TeamMemberSnapshot {

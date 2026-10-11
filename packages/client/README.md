@@ -24,6 +24,8 @@ The `client/` group provides the browser experience for the dsh web GUI, includi
 
 The kernel packages boot and serve the page; the UI feature packages present it. Each package README owns its contract and configuration.
 
+The shared [client bundler](tsdown.client.ts) reads dependency and `dsh.client` declarations from both `packages/*/*/package.json` and `apps/*/package.json`. Application-owned plugins can therefore use the same module-loader factory and external-module checks without copying the browser shell.
+
 | Package | Role | ctx key |
 |---|---|---|
 | [`web/`](web/README.md) | Boots the browser shell | — |

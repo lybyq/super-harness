@@ -78,6 +78,14 @@ it('initializes shared storage only after acquiring the preflight stage lock', a
   await packageTarget(parseDesktopPackageInvocation(['win-x64'], 'win32', 'x64'), environment, run)
 })
 
+it('显式打包 Nova 私有应用包后才准备运行时，不依赖公开发布家族', async () => {
+  const { run, stages } = supervisor()
+  await packageTarget(parseDesktopPackageInvocation(['win-x64', '--prepare-only'], 'win32', 'x64'), environment, run)
+  const nova = stages.findIndex(stage => stage.startsWith('--dir apps/nova-enterprise pack --pack-destination'))
+  expect(nova).toBeGreaterThan(stages.findIndex(stage => stage.startsWith('--dir apps/desktop-host pack')))
+  expect(nova).toBeLessThan(stages.indexOf('run prepare:packages'))
+})
+
 it.each(['preflight:windows-signing', 'run build:official', 'run sign:primary-runtime', 'run prepare:dsh --defer-runtime-smoke', 'run sign:primary-runtime --dsh',
   'exec tsx scripts/smoke-packaged-runtime.ts',
   'exec electron-builder --config electron-builder.config.mjs --win --x64 --publish never'])

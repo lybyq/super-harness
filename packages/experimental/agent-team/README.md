@@ -63,6 +63,8 @@ The roster shows every member with its role (`lead` or `teammate`) and current s
 
 Only the Lead can create teammates or interrupt them.
 
+Host callers can pass optional `agentOptions` and `cwd` to `spawnTeammate`. They are forwarded to the official continuation provider before the first request and stored in the child Session's existing descriptor, not new Team records. Omitting them preserves inherited model options and shared cwd. Enterprise worktree creation, step budgets and merge review belong to the [desktop adapter](../../../apps/nova-enterprise/README.md); Team does not create or merge worktrees itself.
+
 ### Messages between teammates
 
 Any member can send to another member or the Lead. Each attempt either returns the target inbox `MessageId` or throws. Team does not retain unaccepted send intent, retry new messages after restart, or deduplicate explicit resends.
@@ -200,7 +202,7 @@ These limits describe what a team cannot do yet or what needs special operationa
 
 - **Whole-view broadcasts** — each roster or task change sends the complete roster and non-deleted task board, including descriptions, to every connected browser, even when it is viewing another Session.
 - **Experimental prototype with no stability promise** — the package is public, but its contracts can change freely while it incubates.
-- **One process and one shared checkout** — members share cwd and observe edits immediately; this package provides no worktree, remote member, merge, or filesystem lock.
+- **One process, shared checkout by default** — a Host may explicitly provide a child cwd; this package provides no worktree creation, remote member, merge, or filesystem lock.
 - **Advisory write scopes** — Bash, formatters, code generators, and direct external writers can bypass filesystem version checks; Leads must coordinate ownership and review the final diff.
 - **Flat immutable roster** — only the Lead creates direct teammates; there is no nested Team, rename, deletion, or name reuse.
 - **No automatic ownership release** — inactivity, interruption, process exit, and failed work do not release a task owner.

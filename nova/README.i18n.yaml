@@ -1,0 +1,19 @@
+# Bilingual-pair consistency record for README.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write nova/README.md
+/nova-enterprise-development:
+  en: e1902843a598cb82
+  zh: 029acbeac69f99e1
+/nova-enterprise-development/summary:
+  en: 45df608c7b0f3cc7
+  zh: 888c8f91556fccdd
+/nova-enterprise-development/hub-transport:
+  en: 3d2a99a7b1ab4af4
+  zh: 92f2adf6d098a63f
+/nova-enterprise-development/community-desktop-composition:
+  en: 6b954ca780628c10
+  zh: 996403ea442a48da
+/nova-enterprise-development/verification:
+  en: 8c0e0d1c740d7bfa
+  zh: 2dbd5e8ca0378ad4

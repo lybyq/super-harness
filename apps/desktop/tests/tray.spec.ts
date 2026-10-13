@@ -43,8 +43,8 @@ it('shows the application icon with its name as the tooltip and an Open / Quit m
   const f = setup()
   expect(native.createFromPath).toHaveBeenCalledWith('C:/app/resources/tray.ico')
   expect(f.native.image).toEqual({ path: 'C:/app/resources/tray.ico' })
-  expect(f.native.setToolTip).toHaveBeenCalledWith('DeepSeek Harness')
-  expect(labels(native.menus[0]!)).toEqual(['Open DeepSeek Harness', 'separator', 'Quit DeepSeek Harness'])
+  expect(f.native.setToolTip).toHaveBeenCalledWith('Nova')
+  expect(labels(native.menus[0]!)).toEqual(['Open Nova', 'separator', 'Quit Nova'])
   expect(f.native.setContextMenu).toHaveBeenCalledWith({ template: native.menus[0] })
 })
 
@@ -63,10 +63,32 @@ it('relabels the menu in the current locale and ignores relabel after disposal',
   const f = setup()
   f.setLocale('zh')
   f.tray.relabel()
-  expect(labels(native.menus[1]!)).toEqual(['打开 DeepSeek Harness', 'separator', '退出 DeepSeek Harness'])
+  expect(labels(native.menus[1]!)).toEqual(['打开 Nova', 'separator', '退出 Nova'])
   f.tray.dispose()
   f.tray.dispose()
   expect(f.native.destroy).toHaveBeenCalledOnce()
   f.tray.relabel()
   expect(native.menus).toHaveLength(2)
+})
+
+it('exposes registered profiles, current selection, registration, and local diagnostics', () => {
+  const select = vi.fn()
+  const add = vi.fn()
+  const diagnostics = vi.fn()
+  const tray = new DesktopTray({ iconPath: 'icon.ico', locale: () => resolveDesktopLocale('zh'),
+    open: vi.fn(), quit: vi.fn(), diagnostics,
+    profiles: { list: () => [{ id: 'default', label: 'default' }, { id: 'research', label: '研究' }],
+      current: () => 'research', select, add } })
+  const menu = native.menus[0]!
+  expect(labels(menu)).toEqual(['打开 Nova', '导出诊断 ZIP…', '环境 / Profile', 'separator', '退出 Nova'])
+  const profiles = menu[2]!.submenu as MenuItemConstructorOptions[]
+  expect(profiles[0]!.label).toBe('默认环境')
+  expect(profiles[1]!.checked).toBe(true)
+  ;(profiles[0] as { click: () => void }).click()
+  ;(profiles[3] as { click: () => void }).click()
+  ;(menu[1] as { click: () => void }).click()
+  expect(select).toHaveBeenCalledWith('default')
+  expect(add).toHaveBeenCalledOnce()
+  expect(diagnostics).toHaveBeenCalledOnce()
+  tray.dispose()
 })

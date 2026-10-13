@@ -90,7 +90,7 @@ export const zh = {
   unsavedConfiguration: '配置尚未保存。确定放弃本次修改并离开吗？',
   HUB_SKILL_SECRET_UNSUPPORTED: 'Skill 正文是模型可见内容，不能注入密钥。请将账号配置移到它调用的 MCP 或 Host 插件。',
   dependencyNotReady: '依赖未就绪',
-  HUB_COMPATIBILITY_ERROR: '能力声明的版本范围与当前 DeepSeek 不兼容，已阻止加载。',
+  HUB_COMPATIBILITY_ERROR: '能力声明的版本范围与当前 Nova 不兼容，已阻止加载。',
   HUB_BUNDLE_CONFIGURATION_UNSUPPORTED:
     '此 Bundle 需要配置映射适配，当前无法安全注入参数。请维护人提供原生 Host 插件或无参 Bundle。',
   HUB_PLAN_CONFLICT: '能力存在依赖、版本或角色约束冲突，请先调整依赖方。',
@@ -119,7 +119,7 @@ export const zh = {
   configurationSaved: '配置已保存；已安装能力已尝试重载，请查看运行状态。',
   credentialsNotice:
     '密钥由桌面 Host 的官方凭据服务保存，不会返回到表单或发送给模型。当前存储保护取决于部署的凭据 Provider。',
-  installationNotice: '精确版本安装与真实运行结果分别显示；工具权限继续由 DeepSeek 原生策略控制。',
+  installationNotice: '精确版本安装与真实运行结果分别显示；工具权限继续由 Nova 原生策略控制。',
   installedTab: '已安装',
   details: '查看详情',
   install: '安装',
@@ -178,7 +178,7 @@ export const zh = {
   HUB_CONFIGURATION_ACTIVATION_FAILED: '配置已保存，但能力未能启动，旧凭据已停止使用。请检查新配置后重试启用。',
   HUB_ENGINE_CONFIG_MISMATCH: '安装引擎的 Hub 或 Runtime 与桌面不一致，已阻止安装。',
   HUB_LOCAL_STATE_INVALID: '本地能力状态无法读取，请检查凭据存储，不要覆盖资源。',
-  HUB_RUNTIME_UNSUPPORTED: '能力缺少支持的 DeepSeek 绑定，或所需官方 Provider 未加载，请联系维护人适配。',
+  HUB_RUNTIME_UNSUPPORTED: '能力缺少支持的 Nova 绑定，或所需官方 Provider 未加载，请联系维护人适配。',
   HUB_BINDING_INVALID: '绑定无效。非环境变量键需显式映射，入口必须位于已安装包内。',
   HUB_ACTIVATION_FAILED: '启动失败，未提交变更。请检查配置及私有服务连接后重试。',
   HUB_ROLLBACK_FAILED: '变更失败且旧能力未完全恢复，请核对已安装列表和 Host 日志，暂勿依赖其运行结果。',
@@ -205,7 +205,7 @@ export const zh = {
   roleDraft: '无已发布展示版本',
   rolePlanTitle: '角色能力解析',
   rolePlanNotice: '这是应用前的预览；点击右侧应用才会安装能力并注入职责。免发布审批不取消工具权限。',
-  roleMissingBindings: '以下待启用能力缺少 DeepSeek 绑定',
+  roleMissingBindings: '以下待启用能力缺少 Nova 绑定',
   roleEnabled: '期望启用',
   roleDisabled: '期望禁用',
   rolePermissions: '权限声明',
@@ -345,7 +345,7 @@ export const en: Record<keyof typeof zh, string> = {
   HUB_SKILL_SECRET_UNSUPPORTED:
     'Skill content is model-visible. Configure credentials on its MCP or Host plugin, not in the Skill body.',
   dependencyNotReady: 'Dependency not ready',
-  HUB_COMPATIBILITY_ERROR: 'The declared version range is incompatible with this DeepSeek runtime. Loading blocked.',
+  HUB_COMPATIBILITY_ERROR: 'The declared version range is incompatible with this Nova runtime. Loading blocked.',
   HUB_BUNDLE_CONFIGURATION_UNSUPPORTED:
     'This Bundle requires a configuration mapping adapter. Provide a native Host plugin or a parameter-free Bundle.',
   HUB_PLAN_CONFLICT: 'Dependency, version, or role constraints conflict. Adjust dependents first.',
@@ -376,7 +376,7 @@ export const en: Record<keyof typeof zh, string> = {
   credentialsNotice:
     'The desktop Host stores secrets through the official credential service. Secrets are not returned to this form or sent to the model. Storage protection depends on the deployed credential Provider.',
   installationNotice:
-    'Exact-version installation and runtime readiness are reported separately. Native DeepSeek tool policies still apply.',
+    'Exact-version installation and runtime readiness are reported separately. Native Nova tool policies still apply.',
   installedTab: 'Installed',
   details: 'Details',
   install: 'Install',
@@ -440,7 +440,7 @@ export const en: Record<keyof typeof zh, string> = {
     'Settings saved, but startup failed. Old credentials are no longer in use. Check settings before enabling again.',
   HUB_ENGINE_CONFIG_MISMATCH: 'Installer Hub or runtime differs from the desktop. Installation blocked.',
   HUB_LOCAL_STATE_INVALID: 'Local state could not be read. Inspect credential storage without overwriting resources.',
-  HUB_RUNTIME_UNSUPPORTED: 'Native DeepSeek binding or provider unavailable. Ask the maintainer to adapt it.',
+  HUB_RUNTIME_UNSUPPORTED: 'Native Nova binding or provider unavailable. Ask the maintainer to adapt it.',
   HUB_BINDING_INVALID: 'Invalid binding. Map non-environment keys explicitly; keep entries inside the package.',
   HUB_ACTIVATION_FAILED: 'Startup failed; change not committed. Check settings and private-service connectivity.',
   HUB_ROLLBACK_FAILED:
@@ -471,7 +471,7 @@ export const en: Record<keyof typeof zh, string> = {
   rolePlanTitle: 'Resolved capabilities',
   rolePlanNotice:
     'Preview before applying. Apply on the right to install capabilities and inject responsibilities. Publication without approval does not bypass tool permissions.',
-  roleMissingBindings: 'Enabled capabilities missing DeepSeek bindings',
+  roleMissingBindings: 'Enabled capabilities missing Nova bindings',
   roleEnabled: 'Desired enabled',
   roleDisabled: 'Desired disabled',
   rolePermissions: 'Permission declarations',

@@ -12,6 +12,7 @@ import { DesktopHostFatalError, DesktopHostUncleanExitError } from '../src/host-
 import { en, zh } from '../src/locale.ts'
 import { DesktopUpdatePreparationError } from '../src/update-error.ts'
 import { writeCrashReport } from '../src/crash-report.ts'
+import { DesktopProfileCatalog } from '../src/profiles.ts'
 
 type InvokeEvent = { sender?: unknown; senderFrame: { url: string } }
 type InvokeHandler = (event: InvokeEvent, ...args: unknown[]) => unknown
@@ -160,6 +161,7 @@ const harness = await vi.hoisted(async () => {
     getAppPath: (): string => 'desktop-test-app',
     setAppLogsPath: vi.fn(),
     getPath: vi.fn<(name: string) => string>(),
+    setPath: vi.fn(),
     setAboutPanelOptions: vi.fn<(options: Electron.AboutPanelOptionsOptions) => void>(),
     requestSingleInstanceLock: () => true,
     setAsDefaultProtocolClient: vi.fn(),
@@ -407,6 +409,7 @@ beforeEach(() => {
   const userData = mkdtempSync(join(tmpdir(), 'dsh-main-user-data-'))
   onTestFinished(() => { rmSync(userData, { recursive: true, force: true }) })
   harness.app.getPath.mockImplementation(name => name === 'userData' ? userData : `desktop-test-${name}`)
+  vi.stubEnv('DSH_HOME', `${userData}-home`)
   harness.dialog.showMessageBox.mockImplementation((options: { title?: string }) => {
     if (options.title !== en.startupFailed) return Promise.resolve({ response: 1 })
     harness.dialogShown.resolve()
@@ -443,6 +446,33 @@ afterEach(async () => {
 })
 
 describe('desktop main startup', () => {
+  it.each([false, true])('switches a tray environment only after admission lock, confirmation and clean stop (approve=%s)', async (approve) => {
+    const base = harness.app.getPath('userData')
+    const catalog = new DesktopProfileCatalog(base, process.env.DSH_HOME!)
+    const profile = await catalog.add(`${base}-profile`)
+    const host = await readyWorkspace()
+    host.inspectQuit.mockResolvedValue({ activeTasks: true, scheduledTasks: false })
+    harness.dialog.showMessageBox.mockResolvedValue({ response: approve ? 0 : 1 })
+    const profileMenu = harness.menu.mock.calls.map(([items]) => items.find(item => item.label === en.profilesMenu))
+      .find(item => item !== undefined)?.submenu
+    expect(Array.isArray(profileMenu)).toBe(true)
+    const entries = profileMenu as MenuItemConstructorOptions[]
+    ;(entries[1] as { click: () => void }).click()
+    if (!approve) {
+      await vi.waitFor(() => { expect(host.updateTasks).toHaveBeenCalledWith('unlock') })
+      expect(host.stop).not.toHaveBeenCalled()
+      expect(harness.app.relaunch).not.toHaveBeenCalled()
+      expect(new DesktopProfileCatalog(base, process.env.DSH_HOME!).selectedId).toBe('default')
+      host.inspectQuit.mockResolvedValue({ activeTasks: false, scheduledTasks: false })
+      return
+    }
+    await host.stopping.promise
+    expect(host.updateTasks).toHaveBeenCalledWith('lock')
+    expect(harness.app.relaunch).not.toHaveBeenCalled()
+    host.exited.resolve()
+    await vi.waitFor(() => { expect(harness.app.relaunch).toHaveBeenCalledOnce() })
+    expect(new DesktopProfileCatalog(base, process.env.DSH_HOME!).selectedId).toBe(profile.id)
+  })
   it.each([true, false])('selects the package manager before Host startup (packaged=%s)', async (packaged) => {
     harness.app.isPackaged = packaged
     await readyForUpdate()
@@ -555,7 +585,7 @@ describe('desktop main startup', () => {
     await vi.advanceTimersByTimeAsync(0)
     const zh = locale === 'zh-CN'
     expect(harness.dialog.showMessageBox).toHaveBeenLastCalledWith(expect.objectContaining({
-      type: 'info', title: zh ? '关于 DeepSeek Harness' : 'About DeepSeek Harness', message: 'DeepSeek Harness',
+      type: 'info', title: zh ? '关于 Nova' : 'About Nova', message: 'Nova',
       detail: zh ? '版本 V1.0.0' : 'Version V1.0.0', buttons: [zh ? '确定' : 'OK'], cancelId: 0,
     }))
     // A dialog that cannot open is logged, not surfaced as an unhandled rejection.
@@ -973,7 +1003,7 @@ describe('desktop main startup', () => {
     expect(() => handler(event, 'application', NaN, 34)).toThrow('invalid popup request')
     const application = handler(event, 'application', 48, 34)
     expect(harness.menu.buildFromTemplate.mock.lastCall![0].map(item => item.label ?? item.type)).toEqual([
-      '关于 DeepSeek Harness', 'separator', '检查更新…', '管理 dsh 命令…', 'separator', '退出',
+      '关于 Nova', 'separator', '导出诊断 ZIP…', '检查更新…', '管理 dsh 命令…', 'separator', '退出',
     ])
     expect(harness.popup.mock.lastCall![0]).toMatchObject({ window, x: 48, y: 34 })
     expect(harness.popup.mock.lastCall![0].callback).toBeTypeOf('function')
@@ -1006,12 +1036,12 @@ describe('desktop main startup', () => {
       .find(items => items.some(item => item.role === 'editMenu'))
     if (template === undefined) throw new Error('application menu missing')
     expect(template.map(describeItem)).toEqual(platform === 'darwin'
-      ? ['Desktop test', en.fileMenu, 'editMenu', 'windowMenu']
+      ? ['Nova', en.fileMenu, 'editMenu', 'windowMenu']
       : ['Application', 'editMenu'])
     const application = template[0]!.submenu as MenuItemConstructorOptions[]
     expect(application.filter(item => item.visible !== false).map(describeItem)).toEqual(platform === 'darwin'
-      ? ['about', 'separator', en.checkUpdatesMenu, en.cliCommandMenu, 'separator', 'hide', 'hideOthers', 'unhide', 'separator', 'quit']
-      : ['about', 'separator', en.checkUpdatesMenu, 'separator', 'quit'])
+      ? ['about', 'separator', en.diagnosticsMenu, en.checkUpdatesMenu, en.cliCommandMenu, 'separator', 'hide', 'hideOthers', 'unhide', 'separator', 'quit']
+      : ['about', 'separator', en.diagnosticsMenu, en.checkUpdatesMenu, 'separator', 'quit'])
     expect(harness.menu.setApplicationMenu).toHaveBeenCalledOnce()
   })
 
@@ -1027,7 +1057,8 @@ describe('desktop main startup', () => {
       const commands = applicationMenuItems().filter(item =>
         item.role === 'hide' || item.role === 'hideOthers' || item.role === 'unhide' || item.role === 'quit'
         || item.label === en.checkUpdatesMenu || item.label === zh.checkUpdatesMenu
-        || item.label === en.cliCommandMenu || item.label === zh.cliCommandMenu)
+        || item.label === en.cliCommandMenu || item.label === zh.cliCommandMenu
+        || item.label === en.diagnosticsMenu || item.label === zh.diagnosticsMenu)
       await expect(JSON.stringify(commands, null, 2) + '\n')
         .toMatchFileSnapshot(`./expected/application-menu-${locale}.json`)
       expect(harness.app.name).toBe('@deepseek-ai/dsh-desktop')

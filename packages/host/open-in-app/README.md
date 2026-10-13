@@ -63,6 +63,8 @@ When the inherited process layer of the [launch environment](../../util/launch-e
 
 Resolution runs lazily, once per host process, on the first request that needs it; installing an application takes effect on the next restart, while an uninstalled one heals immediately — a launch that finds its executable gone re-resolves that one entry and drops it from the list when nothing proves it anymore. The icon route serves the real application icon on every platform where one is extractable: the bundle's `.icns` as a 128px PNG on macOS, the executable's associated icon as a 32px PNG on Windows, and the desktop entry's hicolor-theme icon (PNG or SVG) on Linux; a missing icon answers 404 and the browser surface renders a generic glyph.
 
+External GUI launches remove inherited `ELECTRON_RUN_AS_NODE` before applying adapter environment values. Desktop runs its Host with this flag, but editors such as VS Code must start as applications. An adapter that deliberately runs Electron as a CLI, such as GitHub Desktop, supplies its own Node-mode value.
+
 ### The `./shared` subpath
 
 The route paths and wire payload types are published as the browser-safe `./shared` subpath (constants and types only, no runtime identity); the browser package inlines it into its client bundle. A route or payload change lands in `src/shared.ts` and both packages pick it up from there.

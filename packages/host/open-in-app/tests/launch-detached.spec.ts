@@ -12,9 +12,24 @@ afterEach(() => {
   vi.restoreAllMocks()
   vi.mocked(spawn).mockReset()
   vi.useRealTimers()
+  vi.unstubAllEnvs()
 })
 
 describe('launchDetachedApp watch window', () => {
+  it.each([undefined, { ELECTRON_RUN_AS_NODE: '1' }])('drops inherited Electron Node mode but honors explicit adapter mode: %j', async (env) => {
+    vi.stubEnv('ELECTRON_RUN_AS_NODE', '1')
+    const child = new ChildProcess()
+    vi.mocked(spawn).mockReturnValueOnce(child)
+    const launched = launchDetachedApp('fixture-editor', ['/workspace'], { watchMs: 100, env })
+    try {
+      const options = vi.mocked(spawn).mock.calls[0]![2]!
+      expect(options.env?.ELECTRON_RUN_AS_NODE).toBe(env?.ELECTRON_RUN_AS_NODE)
+    } finally {
+      child.emit('exit', 0, null)
+      await launched
+      child.removeAllListeners()
+    }
+  })
   it.each(['exit 0', 'exit 3', 'error'] as const)('ignores late %s after unref without killing the child', async (event) => {
     vi.useFakeTimers()
     const child = new ChildProcess()

@@ -10,6 +10,7 @@ export type DesktopRuntimePatch =
 
 /** Every workspace patch requires an explicit Desktop decision; runtime-only entries may add or replace a patch. */
 export const DESKTOP_RUNTIME_PATCHES: Readonly<Record<string, DesktopRuntimePatch>> = {
+  'dsh-context@0.69.1': { scope: 'shared', reason: '内网桌面禁止插件查询公网余额，保留本地上下文洞察。' },
   ...Object.fromEntries(NOVA_COMMUNITY_PATCH_PACKAGES.map(name => [`${name}@0.4.5`, {
     scope: 'shared' as const, reason: 'Nova disables automatic public usage heartbeats; aggregate client rows fail closed.',
   }])),

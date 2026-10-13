@@ -50,9 +50,9 @@ export type MacOSNotarizationEnvironment =
 export function resolveDesktopAppId(env: NodeJS.ProcessEnv): string
 
 /**
- * Resolve the npm registry used to materialize the bundled runtime and its external dependencies.
- * @param env - Packaging environment.
- * @returns Registry origin; the public registry unless a local mirror is configured.
+ * 解析桌面生产依赖的 npm 源；HTTP 须通过 DSH_DESKTOP_NPM_ALLOW_HTTP=true 明确允许。
+ * @param env - 打包环境；非法地址或 HTTP 许可值在下载前抛出异常。
+ * @returns 规范化源站；未配置时使用公网 npm 源。
  */
 export function resolveNpmRegistry(env: NodeJS.ProcessEnv): string
 

@@ -14,6 +14,12 @@ packages:
   # closure is what the exe bundles and what the Python runtime distributes.
   - python/sdk-runtime
 
+# 内网只使用已携带的固定 pnpm；版本不符时报错，不自动联网下载其他版本。
+managePackageManagerVersions: false
+packageManagerStrictVersion: true
+verifyDepsBeforeRun: false
+strictDepBuilds: true
+
 overrides:
   '@linxin666/dsh-web-all': '0.4.5'
   '@linxin666/dsh-client-ui-plugin-manager': '0.4.5'
@@ -44,7 +50,7 @@ peerDependencyRules:
     typescript: '>=5 <7'
 
 # pnpm 10+ blocks any dependency shipping an install/build script until it is
-# explicitly reviewed here (strictDepBuilds defaults to true: an unlisted script
+# explicitly reviewed here (this workspace sets strictDepBuilds to true: an unlisted script
 # is a hard install error). Every such package MUST be listed; we deny by
 # default and only allow scripts we need. esbuild (native binary) and lefthook
 # (git hooks) genuinely need theirs.
@@ -73,6 +79,10 @@ allowBuilds:
   electron-winstaller: false
   # Store-index rewriting only needs msgpackr's portable JavaScript codec.
   msgpackr-extract: false
+  # 内网关闭公网隧道；SSH 的可选原生加速不作为桌面必需依赖。
+  cloudflared: false
+  cpu-features: false
+  ssh2: false
 
 minimumReleaseAgeExclude:
   # Office engines and their API are qualified and released together by the kit repository.
@@ -122,10 +132,11 @@ minimumReleaseAgeExclude:
   - '@trycua/cua-driver@0.28.0'
   # The package manager is a workspace devDependency, so its own exact pin
   # must be exempt from the release-age window that guards other packages.
-  - pnpm@11.28.5
+  - pnpm@10.34.6
   # Desktop packaging requires this Electron fingerprint with node-addon-require-builtin 0.1.9.
   - electron@44.7.0
 patchedDependencies:
+  'dsh-context@0.69.1': patches/dsh-context@0.69.1.patch
   '@linxin666/dsh-client-ui-git-graph@0.4.5': patches/@linxin666__dsh-client-ui-git-graph@0.4.5.patch
   '@linxin666/dsh-client-ui-market@0.4.5': patches/@linxin666__dsh-client-ui-market@0.4.5.patch
   '@linxin666/dsh-client-ui-plugin-manager@0.4.5': patches/@linxin666__dsh-client-ui-plugin-manager@0.4.5.patch

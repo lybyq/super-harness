@@ -63,6 +63,7 @@ export type OpenInAppLaunchOutcome = 'launched' | 'missing' | 'failed'
  * adapter explicitly hides its own CLI process. Launch success is decoupled
  * from process exit — launchers such as kitty or the JetBrains IDEs stay in
  * the foreground for their whole window lifetime, so the watch window only
+ * Electron 宿主的 Node 模式不会自动传给 GUI；需要该模式的适配器必须通过 env 显式声明。
  * catches launchers that fail immediately: rejects on a spawn failure and on
  * a nonzero exit inside the window; a child still running when the window
  * closes is unrefed and counted launched, never killed.
@@ -73,11 +74,16 @@ export type OpenInAppLaunchOutcome = 'launched' | 'missing' | 'failed'
  */
 export const launchDetachedApp: OpenInAppLauncher = (command, args, options) =>
   new Promise((resolve, reject) => {
+    const env = scrubbedParentEnv()
+    // Windows 环境变量不区分大小写；移除宿主模式后再应用适配器显式要求。
+    for (const key of Object.keys(env)) {
+      if (key.toUpperCase() === 'ELECTRON_RUN_AS_NODE') Reflect.deleteProperty(env, key)
+    }
     const child = spawn(command, [...args], {
       detached: true,
       stdio: 'ignore',
       windowsHide: options.windowsHide,
-      env: { ...scrubbedParentEnv(), ...options.env },
+      env: { ...env, ...options.env },
     })
     let settled = false
     const settle = (outcome: () => void): void => {

@@ -34,7 +34,7 @@ Retain the returned `run.json` and reuse its random identity and `qualification/
 Prepare fresh source resources with the repository's preparation-only workflow, then generate the shared bootstrap, two private version-bound runtime copies, and frozen application files. Replace `<run.json>` with the allocator's manifest path. Preparation-only builds and checks the source runtime but stops before signing; the other commands never invoke a signer or installer. These commands refuse to overwrite existing per-run outputs; retain partial material after an error instead of retrying over it.
 
 ```powershell
-node apps/desktop/node_modules/pnpm/bin/pnpm.mjs --dir apps/desktop run prepare:package win-x64
+node apps/desktop/node_modules/pnpm/bin/pnpm.cjs --dir apps/desktop run prepare:package win-x64
 node --import tsx apps/desktop/scripts/prepare-installed-update.ts bootstrap "<run.json>"
 node --import tsx apps/desktop/scripts/prepare-installed-update.ts runtime "<run.json>"
 node --import tsx apps/desktop/scripts/prepare-installed-update.ts application "<run.json>"

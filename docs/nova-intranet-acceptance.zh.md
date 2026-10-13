@@ -43,7 +43,7 @@ Jira MCP 还需带入 `jira-mcp/src/config/config.ts`、`test/config.test.ts`、
 
 Hub 复制 `manifests/deployments/desktop-intranet.example.yaml`，填写真实 GitLab Group、npm registry／staticIndexUrl、CA 和下载主机白名单。来源 `authRef` 的密钥由 Host 环境安全注入，依据现有环境凭据适配器映射，不提交 `.env`、`.npmrc` 或实际密码。npm 标签和 GitLab 分支不作为安装锁：索引保留精确版本、GitLab commit SHA／entryPath，以及 npm integrity／归档哈希。
 
-官方 Electron 更新器独立于社区更新器。内网包应明确设置 `DSH_DESKTOP_AUTO_UPDATE_ENV=test`、`DOWNLOAD_TEST_ORIGIN` 为内网 HTTPS origin、`DOWNLOAD_TEST_RELEASE_ID` 为 32 位小写十六进制部署 ID，并在打包前验证 feed／bin 路径；不要把默认公网 production feed 当成企业更新地址。公开上传脚本针对上游 COS，不能直接作为内网静态源上传器。真实签名证书、更新服务器、统计及账户请求需按下面清单验收。
+官方 Electron 更新器独立于社区更新器。内网免测试登录的包使用 `DSH_DESKTOP_AUTO_UPDATE_ENV=production`，显式填写内部 HTTPS `DOWNLOAD_PROD_ORIGIN` 与 `DSH_DESKTOP_MANDATORY_UPDATE_PROD_ORIGIN`，策略配置不包含测试 `allowedAuthOrigins`。不填生产下载 origin 仍会采用上游公网地址；`test` 则需要测试认证 origin 与 32 位小写十六进制 `DOWNLOAD_TEST_RELEASE_ID`，不能当免登录模式。打包前验证 feed／bin 与策略服务路径。公开上传脚本针对上游 COS，不能直接作为内网静态源上传器。真实签名证书、更新服务器、统计及账户请求需按下面清单验收。
 
 ## 六个 MCP 的准确适配
 

@@ -30,6 +30,10 @@ server.listen(0, '127.0.0.1', () => {
   process.send({ type: 'ready', url: 'http://127.0.0.1:' + server.address().port + '/?token=fixture' })
 })
 process.on('message', message => {
+  if (message.type === 'health') {
+    process.send({ type: 'health', requestId: message.requestId })
+    return
+  }
   if (message.type === 'update-tasks') {
     process.send({ type: 'update-tasks', requestId: message.requestId, active: message.action === 'lock' })
     return
@@ -73,6 +77,18 @@ afterEach(async () => {
 })
 
 describe('desktop host process', () => {
+  it('detects an unresponsive live process through private health IPC and never replays a task', async () => {
+    const runtime = projectWithHost(HTTP_HOST.replace("process.send({ type: 'health', requestId: message.requestId })", '/* deliberately unanswered */'))
+    const failure = Promise.withResolvers<Error>()
+    const host = new DesktopHostProcess(process.execPath, runtime, runtime, undefined, process.env,
+      error => failure.resolve(error), undefined, undefined, undefined,
+      { watchdog: { intervalMs: 20, timeoutMs: 100, missLimit: 2 } })
+    hosts.push(host)
+    await host.start()
+    expect(await failure.promise).toHaveProperty('message', expect.stringContaining('health check failed'))
+    await host.stop(true)
+    expect(existsSync(join(runtime, 'stopped'))).toBe(true)
+  })
   it('correlates task inspections and admission changes over private IPC', async () => {
     const host = hostProcess(projectWithHost())
     await expect(host.updateTasks('inspect')).rejects.toThrow('Host is unavailable')

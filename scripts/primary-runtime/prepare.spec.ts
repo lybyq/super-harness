@@ -4,7 +4,7 @@ import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { basename, join } from 'node:path'
 import { zipSync } from 'fflate'
-import { expect, it } from 'vitest'
+import { expect, it, vi } from 'vitest'
 import { downloadPrimaryRuntimeAsset, prepareOfficeSkillAssets, primaryRuntimePayloadDigest, smokePrimaryRuntime, unpackPrimaryRuntimeWheel } from './prepare.ts'
 import lock from './lock.json' with { type: 'json' }
 
@@ -73,6 +73,21 @@ it('extracts a hash-verified cached library without a Python installer or networ
   } finally {
     await rm(root, { recursive: true, force: true })
   }
+})
+
+it('离线构建缺少缓存立即失败，不尝试下载；已有缓存仍验证哈希', async (context) => {
+  const root = await mkdtemp(join(tmpdir(), 'desktop-offline-wheel-'))
+  context.onTestFinished(async () => { await rm(root, { recursive: true, force: true }) })
+  vi.stubEnv('HARNESS_OFFLINE_BUILD', '1')
+  context.onTestFinished(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals() })
+  const fetchProbe = vi.fn(() => { throw new Error('offline must not fetch') })
+  vi.stubGlobal('fetch', fetchProbe)
+  const hash = createHash('sha256').update(libraryWheel).digest('hex')
+  await expect(downloadPrimaryRuntimeAsset('https://unused.invalid/library.whl', hash, root)).rejects.toThrow('offline')
+  expect(fetchProbe).not.toHaveBeenCalled()
+  await writeFile(join(root, hash), libraryWheel)
+  expect(await downloadPrimaryRuntimeAsset('https://unused.invalid/library.whl', hash, root)).toBe(join(root, hash))
+  expect(fetchProbe).not.toHaveBeenCalled()
 })
 
 it('fully extracts a large deflate-compressed wheel entry', async () => {

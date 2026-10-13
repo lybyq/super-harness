@@ -38,19 +38,25 @@ function requireEnvironmentValue(env, name) {
 }
 
 /**
- * Resolve the npm registry used to materialize the bundled runtime and its external dependencies.
- * @param {NodeJS.ProcessEnv} env - Packaging environment.
- * @returns {string} Registry origin; the public registry unless a local mirror is configured.
+ * 解析桌面生产依赖的 npm 源；HTTP 仅在部署文件明确允许时可用，地址不得含凭据。
+ * @param {NodeJS.ProcessEnv} env - 打包环境；DSH_DESKTOP_NPM_ALLOW_HTTP 只接受 true／false。
+ * @returns {string} 规范化源站；未配置时使用公网 npm 源。
+ * @throws {Error} 配置非法或未明确允许 HTTP 时，在下载前终止打包。
  */
 export function resolveNpmRegistry(env) {
+  const allowHttp = env.DSH_DESKTOP_NPM_ALLOW_HTTP?.trim() ?? ''
+  if (allowHttp !== '' && allowHttp !== 'true' && allowHttp !== 'false') {
+    throw new Error('desktop release environment: DSH_DESKTOP_NPM_ALLOW_HTTP must be true or false')
+  }
   const configured = env[NPM_REGISTRY_ENV]?.trim() ?? ''
   if (configured === '') return DEFAULT_NPM_REGISTRY
   let url
   try { url = new URL(configured) }
-  catch { throw new Error(`desktop release environment: ${NPM_REGISTRY_ENV} must be an HTTPS origin`) }
-  if (url.protocol !== 'https:' || url.username !== '' || url.password !== '' || url.search !== '' || url.hash !== ''
+  catch { throw new Error(`desktop release environment: ${NPM_REGISTRY_ENV} must be an absolute registry origin`) }
+  const permittedProtocol = url.protocol === 'https:' || (url.protocol === 'http:' && allowHttp === 'true')
+  if (!permittedProtocol || url.username !== '' || url.password !== '' || url.search !== '' || url.hash !== ''
     || (url.pathname !== '/' && url.pathname !== '')) {
-    throw new Error(`desktop release environment: ${NPM_REGISTRY_ENV} must be an HTTPS origin without credentials, path, query, or fragment`)
+    throw new Error(`desktop release environment: ${NPM_REGISTRY_ENV} requires HTTPS (HTTP needs DSH_DESKTOP_NPM_ALLOW_HTTP=true), without credentials, path, query, or fragment`)
   }
   return url.origin
 }

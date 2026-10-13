@@ -12,6 +12,15 @@ export interface DesktopTrayOptions {
   readonly open: () => void
   /** Request quit through the same confirmation as every other quit entry. */
   readonly quit: () => void
+  /** 用户主动导出本地诊断包；不触发上传。 */
+  readonly diagnostics?: () => void
+  /** 已注册环境及切换行为，标签由清单和桌面语言决定。 */
+  readonly profiles?: {
+    readonly list: () => readonly { id: string; label: string }[]
+    readonly current: () => string
+    readonly select: (id: string) => void
+    readonly add: () => void
+  }
 }
 
 /** Tray icon present for the whole run, not only while the window is hidden. */
@@ -34,6 +43,15 @@ export class DesktopTray {
     tray.setToolTip(messages.aboutProduct)
     tray.setContextMenu(Menu.buildFromTemplate([
       { label: messages.openApplication, click: () => { this.options.open() } },
+      ...this.options.diagnostics === undefined ? [] : [{ label: messages.diagnosticsMenu,
+        click: () => { this.options.diagnostics?.() } }],
+      ...this.options.profiles === undefined ? [] : [{ label: messages.profilesMenu, submenu: [
+        ...this.options.profiles.list().map(profile => ({ type: 'radio' as const,
+          label: profile.id === 'default' ? messages.profileDefault : profile.label,
+          checked: profile.id === this.options.profiles?.current(),
+          click: () => { this.options.profiles?.select(profile.id) } })),
+        { type: 'separator' as const }, { label: messages.profileAdd, click: () => { this.options.profiles?.add() } },
+      ] }],
       { type: 'separator' },
       { label: messages.quitApplication, click: () => { this.options.quit() } },
     ]))

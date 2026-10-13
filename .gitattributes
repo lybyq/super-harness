@@ -8,6 +8,7 @@
 
 # Unified diff context adds a space before the upstream tab indentation.
 patches/@linxin666__*.patch whitespace=-space-before-tab
+patches/dsh-context@0.69.1.patch whitespace=-space-before-tab
 
 *.pdf binary
 

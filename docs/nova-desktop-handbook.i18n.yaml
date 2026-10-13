@@ -1,0 +1,28 @@
+# Bilingual-pair consistency record for nova-desktop-handbook.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/nova-desktop-handbook.md
+/:
+  en: 0054e275e3593347
+  zh: 577d23592c29e409
+/harness-desktop-handbook-index:
+  en: 845f22854bed13e6
+  zh: 53bf70a2805ad455
+/harness-desktop-handbook-index/start-here:
+  en: 1300951c3b0dc77e
+  zh: 41f6a709478f58e1
+/harness-desktop-handbook-index/find-the-right-manual:
+  en: 41068e7d263f6446
+  zh: 0396b58515ffd473
+/harness-desktop-handbook-index/work-across-the-two-repositories:
+  en: 887d0b01f016c281
+  zh: 80409e8acc781906
+/harness-desktop-handbook-index/enterprise-deployment-readiness:
+  en: ea5928901aeae346
+  zh: f03238ed37a3864f
+/harness-desktop-handbook-index/themes-and-ordinary-user-entry-points:
+  en: 1e465979688fefea
+  zh: 74628f5aa81041c8
+/harness-desktop-handbook-index/dev-note:
+  en: e0fdb672ac592cfb
+  zh: 1592fd78fb417657

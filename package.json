@@ -4,7 +4,7 @@
   "license": "MIT",
   "private": true,
   "type": "module",
-  "packageManager": "pnpm@11.28.5",
+  "packageManager": "pnpm@10.34.6",
   "engines": {
     "node": "^22.19.0 || >=24.0.0"
   },
@@ -17,7 +17,7 @@
     "website"
   ],
   "scripts": {
-    "test:nova": "node --import tsx/esm --test --test-concurrency=1 nova/tests/*.test.mjs apps/nova-enterprise/tests/*.test.ts",
+    "test:nova": "node --import tsx/esm --test --test-concurrency=1 nova/tests/*.test.mjs nova/tests/*.test.ts apps/nova-enterprise/tests/*.test.ts",
     "prepare:primary-runtime": "tsx scripts/primary-runtime/prepare.ts",
     "build": "tsx scripts/build.ts",
     "build:bench": "npm run build:native-system && npm run build:lib && tsdown --config-loader native --config benchmarks/tsdown.config.ts",
@@ -266,7 +266,7 @@
     "oxlint": "1.81.0",
     "oxlint-tsgolint": "7.0.2001",
     "papaparse": "5.5.3",
-    "pnpm": "11.28.5",
+    "pnpm": "10.34.6",
     "publint": "^0.3.24",
     "semver": "^7.8.5",
     "smol-toml": "^1.9.0",

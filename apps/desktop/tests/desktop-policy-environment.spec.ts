@@ -9,6 +9,7 @@ const auth = { DSH_DESKTOP_MANDATORY_UPDATE_CONFIG: JSON.stringify({ allowedAuth
 
 it.each(['test', 'production'] as const)('selects the %s policy and authentication together', (deployment) => {
   const policy = resolveDesktopPolicyEnvironment({ ...origins, ...(deployment === 'test' ? auth : {}), DSH_DESKTOP_AUTO_UPDATE_ENV: deployment })
+  if (policy === undefined) throw new Error('A configured update deployment must provide policy metadata')
   const origin = deployment === 'test' ? origins.DSH_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN : origins.DSH_DESKTOP_MANDATORY_UPDATE_PROD_ORIGIN
   expect(policy).toEqual({ origin, allowedPageOrigins: [origin],
     ...(deployment === 'test' ? { allowedAuthOrigins: ['https://login.example.com'] } : {}),
@@ -45,6 +46,19 @@ it.each([undefined, '[]', '["http://login.example.com"]', '["https://login.examp
 it('rejects login origins in production', () => {
   expect(() => resolveDesktopPolicyEnvironment({ ...origins, ...auth, DSH_DESKTOP_AUTO_UPDATE_ENV: 'production' }))
     .toThrow('must not configure allowedAuthOrigins')
+})
+
+it('omits policy only for an explicitly selected unsigned offline test build', () => {
+  const environment = { DSH_DESKTOP_APP_ID: 'com.example.offline', DSH_DESKTOP_OFFLINE_TEST: 'true' }
+  expect(resolveDesktopPolicyEnvironment({ ...environment, DSH_DESKTOP_UNSIGNED: '1' })).toBeUndefined()
+  expect(() => { validateDesktopPackageEnvironment(environment, { platform: 'win32', arch: 'x64' }, { unsigned: true }) })
+    .not.toThrow()
+  for (const options of [{}, { prepareOnly: true }]) {
+    expect(() => { validateDesktopPackageEnvironment(environment, { platform: 'win32', arch: 'x64' }, options) })
+      .toThrow('requires an unsigned test build')
+  }
+  expect(() => resolveDesktopPolicyEnvironment({ DSH_DESKTOP_OFFLINE_TEST: 'yes', DSH_DESKTOP_UNSIGNED: '1' }))
+    .toThrow('must be true or false')
 })
 
 it.each([{ unsigned: true }, { prepareOnly: true }, {}])('requires policy outside local macOS builds in %j', (options) => {

@@ -30,7 +30,7 @@ function fixture(): { root: string; source: string; project: string } {
   writeFileSync(join(source, 'private.patch'), patch.replace('+patched', '+private'))
   writeFileSync(join(source, 'pnpm-workspace.yaml'), yaml.dump({ patchedDependencies: { 'fixture@1.0.0': 'shared.patch' } }))
   writeFileSync(join(source, 'pnpm-lock.yaml'), yaml.dump({
-    patchedDependencies: { 'fixture@1.0.0': createHash('sha256').update(patch).digest('hex') },
+    patchedDependencies: { 'fixture@1.0.0': { hash: createHash('sha256').update(patch).digest('hex'), path: 'shared.patch' } },
   }))
   writeFileSync(join(project, 'pnpm-workspace.yaml'), yaml.dump({
     packages: ['.'], nodeLinker: 'hoisted', overrides: { internal: 'file:./internal.tgz' }, allowBuilds: { fixture: false },
@@ -44,6 +44,7 @@ it('classifies the current workspace and shares only runtime patch bytes', () =>
   const before = readFileSync(join(repository, 'pnpm-lock.yaml'))
   const plan = prepareRuntimePatches(project, repository)
   expect(plan.patches.map(entry => entry.spec)).toEqual([
+    'dsh-context@0.69.1',
     ...NOVA_COMMUNITY_PATCH_PACKAGES.map(name => `${name}@0.4.5`),
     '@earendil-works/pi-ai@1.0.2', 'node-pty@1.2.0-beta.15',
   ])
@@ -51,7 +52,8 @@ it('classifies the current workspace and shares only runtime patch bytes', () =>
   const settings = yaml.load(readFileSync(join(project, 'pnpm-workspace.yaml'), 'utf8')) as { overrides: Record<string, string> }
   expect(settings.overrides['@earendil-works/pi-ai']).toBeUndefined()
   expect(settings.overrides['@earendil-works/pi-ai@^1.0.2']).toBe('1.0.2')
-  expect(readFileSync(join(repository, 'pnpm-lock.yaml'))).toEqual(before)
+  // 大型锁文件使用原生字节比较，避免匹配器逐字节遍历导致超时。
+  expect(readFileSync(join(repository, 'pnpm-lock.yaml')).equals(before)).toBe(true)
 })
 
 it('does not infer version overrides from selected patches', () => {
@@ -90,6 +92,12 @@ it('rejects shared bytes that differ from the workspace lockfile', () => {
   const { source, project } = fixture()
   writeFileSync(join(source, 'shared.patch'), patch + '\n')
   expect(() => { prepareRuntimePatches(project, source, { 'fixture@1.0.0': shared }, {}) }).toThrow('root lockfile')
+})
+
+it('拒绝缺少摘要的 pnpm 10 补丁记录', () => {
+  const { source, project } = fixture()
+  writeFileSync(join(source, 'pnpm-lock.yaml'), yaml.dump({ patchedDependencies: { 'fixture@1.0.0': { path: 'shared.patch' } } }))
+  expect(() => prepareRuntimePatches(project, source, { 'fixture@1.0.0': shared }, {})).toThrow('root lockfile')
 })
 
 it('refuses to write to the workspace or replace an unrelated existing override', () => {

@@ -13,6 +13,7 @@ import { x as extractTar } from 'tar'
 import { parsePrimaryRuntime, workspaceDependencyPaths, type PrimaryRuntimeManifest } from '@deepseek-ai/dsh-tool-workspace-dependencies'
 import lock from './lock.json' with { type: 'json' }
 import { prunePrimaryRuntimePythonTests } from './prune-python-tests.ts'
+import { ensureRuntimePnpmEntry } from './pnpm-entry.ts'
 
 /**
  * Download or reuse an archive only when its bytes match the release lock.
@@ -29,6 +30,9 @@ export async function downloadPrimaryRuntimeAsset(url: string, sha256: string, c
   let cached = true
   try { bytes = readFileSync(destination) } catch (error) {
     if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error
+    if (process.env.HARNESS_OFFLINE_BUILD === '1') {
+      throw new Error(`primary runtime: offline build is missing cached asset ${destination}; prepare and transfer the runtime downloads before entering the intranet`)
+    }
     cached = false
     const timeout = Number(process.env.DSH_RESOURCE_DOWNLOAD_TIMEOUT_MS ?? '300000')
     if (!Number.isSafeInteger(timeout) || timeout < 1 || timeout > 2_147_483_647) throw new Error('DSH_RESOURCE_DOWNLOAD_TIMEOUT_MS must be an integer from 1 to 2147483647')
@@ -125,7 +129,7 @@ export function primaryRuntimePayloadDigest(
   // Identity preserves key order within the selected target, wheel records and distribution map, plus wheel-entry order.
   // Bump format when extraction or assembly changes payload bytes without changing locked inputs.
   return createHash('sha256').update(JSON.stringify({
-    format: 6, target, pythonVersion, pythonRelease, nodeVersion: pnpmVersion === undefined ? undefined : nodeVersion,
+    format: 7, target, pythonVersion, pythonRelease, nodeVersion: pnpmVersion === undefined ? undefined : nodeVersion,
     artifact: runtimeLock.targets[target], wheels, pythonPackages, pnpm: pnpmVersion,
   })).digest('hex')
 }
@@ -209,6 +213,7 @@ export async function preparePrimaryRuntime(options: PreparePrimaryRuntimeOption
         pnpmVersion = (JSON.parse(readFileSync(pnpmManifest, 'utf8')) as { version: string }).version
         await cp(dirname(pnpmManifest), join(dependencies, 'pnpm'), { recursive: true, dereference: true })
       }
+      ensureRuntimePnpmEntry(join(dependencies, 'pnpm'))
     }
     await extractTar({ file: await pythonArchive(target, paths.downloads), cwd: dependencies })
     const manifest: PrimaryRuntimeManifest = {

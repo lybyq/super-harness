@@ -136,6 +136,10 @@ async function main(): Promise<void> {
     if (!existsSync(join(runtime, 'runtime.json'))) {
       throw new Error(`desktop development: prepared runtime missing at ${runtime}; remove --reuse-runtime to prepare it`)
     }
+    const prepared = JSON.parse(readFileSync(join(runtime, 'runtime.json'), 'utf8')) as { pnpm?: string }
+    if (prepared.pnpm !== pnpmVersion) {
+      throw new Error(`desktop development: prepared runtime pnpm ${String(prepared.pnpm)} differs from ${pnpmVersion}; prepare the matching primary-runtime before reusing it`)
+    }
   } else await preparePrimaryRuntime()
   if (values.official && process.env.DSH_HOME === undefined) {
     process.env.DSH_HOME = join(DEVELOPMENT_ROOT, 'official-home')

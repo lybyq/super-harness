@@ -1,0 +1,34 @@
+# Bilingual-pair consistency record for nova-desktop-operations.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/user/nova-desktop-operations.md
+/nova-desktop-operations:
+  en: c45426eae47e8992
+  zh: 475663369cfb1d57
+/nova-desktop-operations/summary:
+  en: c282ffebfe75ec34
+  zh: 2deb44619264e285
+/nova-desktop-operations/table-of-contents:
+  en: 6e3b24a2de5148f3
+  zh: f9c0a8c19fdb03b6
+/nova-desktop-operations/context-insights:
+  en: 1f00305261c6b395
+  zh: 654d3cdc57a0f056
+/nova-desktop-operations/recovery-and-health:
+  en: c05bc089c7dada1e
+  zh: e1ce04b1796255ac
+/nova-desktop-operations/notifications-and-diagnostics:
+  en: 217efbf4e74884f4
+  zh: 5a962805a6f359a2
+/nova-desktop-operations/desktop-environments:
+  en: 94791c033359df46
+  zh: 8394fd59df30b0ef
+/nova-desktop-operations/proxy-configuration:
+  en: 532b249ddbac8311
+  zh: 358f0f42db26d8c5
+/nova-desktop-operations/intranet-verification:
+  en: 5c5f74037e3bbf29
+  zh: f09bc7ff286b26a0
+/nova-desktop-operations/dev-note:
+  en: d0d71d4526b757bd
+  zh: 1e4bab3c56f28825

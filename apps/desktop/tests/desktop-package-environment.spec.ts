@@ -178,6 +178,31 @@ describe('Desktop local packaging configuration', () => {
     }
   })
 
+  it('requires file-owned HTTP consent and still rejects credential-bearing registry URLs', async () => {
+    const release = { ...POLICY, DSH_DESKTOP_APP_ID: RELEASE.DSH_DESKTOP_APP_ID }
+    const consent = { ...release, DSH_DESKTOP_NPM_ALLOW_HTTP: 'true' }
+    expect(() => { validateDesktopPackageEnvironment({
+      ...consent, DSH_DESKTOP_NPM_REGISTRY: 'http://npm-registry.esg.classified.cn/',
+    }, WINDOWS, { unsigned: true }) }).not.toThrow()
+    for (const value of ['http://user:secret@registry.example/', 'http://registry.example/path', 'file:///registry']) {
+      expect(() => { validateDesktopPackageEnvironment({
+        ...consent, DSH_DESKTOP_NPM_REGISTRY: value,
+      }, WINDOWS, { unsigned: true }) }).toThrow(/DSH_DESKTOP_NPM_REGISTRY/u)
+    }
+    expect(() => { validateDesktopPackageEnvironment({
+      ...release, DSH_DESKTOP_NPM_ALLOW_HTTP: 'yes',
+    }, WINDOWS, { unsigned: true }) }).toThrow(/DSH_DESKTOP_NPM_ALLOW_HTTP/u)
+    await withDirectory(async (appRoot) => {
+      await writeFile(join(appRoot, '.env.windows'), 'DSH_DESKTOP_NPM_REGISTRY=http://registry.example/\n')
+      const selected = loadDesktopPackageEnvironment('win32', { DSH_DESKTOP_NPM_ALLOW_HTTP: 'true', DSH_DESKTOP_OFFLINE_TEST: 'true' }, appRoot)
+      expect(selected.DSH_DESKTOP_NPM_ALLOW_HTTP).toBeUndefined()
+      expect(selected.DSH_DESKTOP_OFFLINE_TEST).toBeUndefined()
+      await writeFile(join(appRoot, '.env.windows'), 'DSH_DESKTOP_NPM_REGISTRY=http://registry.example/\nDSH_DESKTOP_NPM_ALLOW_HTTP=true\nDSH_DESKTOP_OFFLINE_TEST=true\n')
+      expect(loadDesktopPackageEnvironment('win32', {}, appRoot).DSH_DESKTOP_NPM_ALLOW_HTTP).toBe('true')
+      expect(loadDesktopPackageEnvironment('win32', {}, appRoot).DSH_DESKTOP_OFFLINE_TEST).toBe('true')
+    })
+  })
+
   it('rejects incomplete macOS identity and credentials and checks referenced files without contacting Apple', async () => {
     expect(() => {
       validateDesktopPackageEnvironment(RELEASE, MACOS)

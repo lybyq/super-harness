@@ -103,6 +103,20 @@ describe('desktop auto-update environment', () => {
     }, 'darwin', 'arm64')).toThrow(/HTTPS origin/u)
   })
 
+  it('企业内网生产更新源不需要测试发布 ID，并保持更新目录结构', () => {
+    expect(resolveDesktopAutoUpdateConfig({ DSH_DESKTOP_AUTO_UPDATE_ENV: 'production',
+      DOWNLOAD_PROD_ORIGIN: 'https://updates.corp.example' }, 'win32', 'x64')).toMatchObject({
+      environment: 'production', origin: 'https://updates.corp.example',
+      publicUrl: 'https://updates.corp.example/dsh-desk/feeds/win-x64/',
+      binaryKeyPrefix: 'dsh-desk/bin/win-x64',
+    })
+  })
+
+  it.each(['', 'http://updates.corp.example', 'https://updates.corp.example/path', 'https://user:pass@updates.corp.example'])('拒绝非法内网生产 origin：%s', (origin) => {
+    expect(() => resolveDesktopAutoUpdateConfig({ DSH_DESKTOP_AUTO_UPDATE_ENV: 'production',
+      DOWNLOAD_PROD_ORIGIN: origin }, 'win32', 'x64')).toThrow(/DOWNLOAD_PROD_ORIGIN/u)
+  })
+
   it('rejects unknown deployments and targets', () => {
     expect(() => resolveDesktopAutoUpdateEnvironment({
       DSH_DESKTOP_AUTO_UPDATE_ENV: 'staging',

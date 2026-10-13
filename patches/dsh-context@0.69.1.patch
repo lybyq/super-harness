@@ -1,0 +1,14 @@
+diff --git a/lib/index.js b/lib/index.js
+--- a/lib/index.js
++++ b/lib/index.js
+@@ -2318,8 +2318,8 @@
+ function watchBalanceChannel(ctx) {
+ 	ctx.inject(["connection"], (c) => {
+ 		const handler = async () => {
+-			const facts = await resolveFacts(ctx);
+-			const value = facts !== null ? await readBalance(facts) : null;
++			// Nova 内网发行版只提供本地洞察，不解析 API 密钥或发起余额请求。
++			const value = null;
+ 			return Response.json({
+ 				ok: true,
+ 				value

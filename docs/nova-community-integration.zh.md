@@ -57,6 +57,19 @@ SSH 和远程 Web 会增加执行或网络暴露面。打开界面不等于企�
 
 ## 内网集成与策略
 
+### 更多实时监测与图表插件
+
+2026-10-12 核对的上游最新发布为 [0.4.6](https://github.com/zhu1090093659/dsh-web/releases/tag/v0.4.6)；Nova 仍固定 0.4.5，不自动替换已审查的依赖组合。下面是独立维护的插件，不在当前二十包集合中。上游介绍说明它们适合补充哪些能力，不代表 Nova 兼容性已验证。
+
+| 插件 | 展示什么 | 内网验收 |
+|---|---|---|
+| [dsh-context](https://github.com/bowenliang123/dsh-context) | 上下文组成、趋势、活动热力图及 Fleet 实时 Agent 卡片 | 内置 0.69.1 并补丁禁用余额请求；验收真实内网会话，镜像自己的依赖闭包 |
+| [dsh-system-monitor-plugin](https://github.com/JularDepick/dsh-system-monitor-plugin) | Host 与上报子进程的 CPU、内存曲线 | 验证 Windows 进程识别、采样开销和子进程生命周期 |
+| [@bryan-cmf/dsh-infra-observability](https://github.com/Bryan-cmf/dsh-infra-observability) | 工具／Skill 成功率和实时执行轨迹 | 验证 projection 兼容性、事件含义及保留策略 |
+| [@loongsuite/dsh-plugin](https://github.com/loongsuite/dsh-plugin) | 经 OTLP 输出的 turn／step／LLM／tool 链路与指标 | 需要内网采集器和监控面板，显式关闭内容采集并审查出口 |
+
+Context 作为独立新增 Bundle 交付，用法与限制见[桌面运维手册](user/nova-desktop-operations.zh.md)。System Monitor 和两个导出器仍是候选，没有安装。OTLP 链路需要单独的企业部署，社区用量统计、会话归档和 Git 图谱保持独立。不要默认启用重叠导出器或公网采集地址，也不要把安装当成兼容性证明。
+
 Nova 的[部署默认配置](../apps/desktop-host/nova.enterprise.patch.yml) 关闭表中五个面向公网的模块。加上上游默认关闭的三个模块，十九个模块中共有八个关闭。关闭模块仍包含在依赖闭包中，不是从仓库依赖里删除。
 
 经过审查的依赖补丁移除了十二个客户端制品的自动公网使用心跳；聚合状态获取失败时，子模块界面保持关闭。[运行时补丁策略](../apps/desktop/scripts/runtime-patch-policy.ts) 在打包中应用相同补丁并校验 lockfile 哈希。这是有限修改，不是通用出站防火墙；官方账号、统计、更新服务、远端素材和手动外链仍须审查。

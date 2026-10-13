@@ -1,8 +1,10 @@
 import type { ProductEventMap, ProductEvent } from '@deepseek-ai/dsh-client-product-analytics/types'
 import { WINDOWS_TITLEBAR_HEIGHT } from './windows-layout.ts'
+import { NOVA_BRANDING, novaWindowTitle } from './branding.ts'
 /** Electron shell: desktop project ownership, custom protocol, windows, and lifecycle. */
 
 import { readFile, writeFile } from 'node:fs/promises'
+import { mkdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
@@ -60,6 +62,11 @@ import { DesktopUpdateOverlays } from './update-overlay.ts'
 import { DesktopQuitConfirmation } from './quit-confirmation.ts'
 import { DesktopTray } from './tray.ts'
 import { DesktopBackgroundNotice } from './background-notice.ts'
+import { resolveDesktopWatchdog } from './host-watchdog.ts'
+import { DesktopTurnAttention } from './turn-attention.ts'
+import { exportDesktopDiagnosticZip } from './diagnostic-zip.ts'
+import { DesktopProfileCatalog } from './profiles.ts'
+import { resolveDshHome } from '@deepseek-ai/dsh-home-paths'
 
 let focusPrimaryWindow = (): void => {}
 let stopForRecovery = async (): Promise<void> => {}
@@ -76,6 +83,8 @@ let windowsLanguage: string | undefined
  * failure while tearing down a ready backend still reads as `running`.
  */
 let backendReady = false
+let desktopProfiles: DesktopProfileCatalog | undefined
+let activeProfileId = 'default'
 /** Error-level console output of the primary window, attached to crash reports. */
 const rendererConsole = new RendererConsoleTail()
 
@@ -154,7 +163,7 @@ function runtimeResources(): RuntimeResources {
   const node = process.execPath
   const nodeBin = development ? join(app.getAppPath(), 'scripts', 'node-bin') : join(process.resourcesPath, 'runtime', 'bin')
   const pnpm = (development ? process.env.DSH_DESKTOP_PNPM_ENTRY : undefined)
-    ?? (development ? join(app.getAppPath(), 'node_modules', 'pnpm', 'bin', 'pnpm.mjs')
+    ?? (development ? join(app.getAppPath(), 'node_modules', 'pnpm', 'bin', 'pnpm.cjs')
       : join(process.resourcesPath, 'runtime', 'primary-runtime', 'dependencies', 'pnpm', 'bin', 'pnpm.mjs'))
   const dsh = (development ? process.env.DSH_DESKTOP_DSH_DIR : undefined)
     ?? (development ? join(app.getAppPath(), '.desktop-build', 'development', 'project') : join(app.getAppPath(), 'dsh'))
@@ -211,6 +220,7 @@ function createWindow(preload: string, show = false, primary = false): BrowserWi
     minWidth: 520,
     minHeight: 600,
     show,
+    ...(primary ? { title: NOVA_BRANDING.name } : {}),
     ...(process.platform === 'win32' && primary ? {
       titleBarStyle: 'hidden' as const,
       titleBarOverlay: { height: WINDOWS_TITLEBAR_HEIGHT, color: chromeFallbackFill(),
@@ -241,6 +251,16 @@ function createWindow(preload: string, show = false, primary = false): BrowserWi
     if (['http:', 'https:'].includes(new URL(url).protocol)) void shell.openExternal(url)
     return { action: 'deny' }
   })
+  if (primary) {
+    // 只更换应用字标，保留任务标题；不改变 Electron 内部名称和用户数据位置。
+    window.on('page-title-updated', (event, title) => {
+      const branded = novaWindowTitle(title)
+      if (branded !== title) {
+        event.preventDefault()
+        window.setTitle(branded)
+      }
+    })
+  }
   if (process.platform === 'darwin' || process.platform === 'win32') {
     // Fullscreen hides native window controls; overlays drop their caption clearance.
     const sendFullscreen = (): void => {
@@ -350,6 +370,7 @@ async function main(): Promise<void> {
   let requireCleanStop = false
   let updateStoppedHost = false
   let updateStopFailure: DesktopHostUncleanExitError | undefined
+  const currentStopFailure = (): DesktopHostUncleanExitError | undefined => updateStopFailure
   let updateState: DesktopUpdateState = { phase: 'idle' }
   const systemLanguages = app.getPreferredSystemLanguages()
   let locale = resolveDesktopStartupLocale(null, systemLanguages)
@@ -441,12 +462,17 @@ async function main(): Promise<void> {
   }
   const platformView = new DesktopPlatformView(join(app.getAppPath(), 'lib', 'preload-platform-account.cjs'),
     () => locale.id === 'zh-CN' ? 'zh_CN' : 'en_US', process.platform === 'win32' ? 'win32' : 'darwin')
+  const healthConfig = resolveDesktopWatchdog(process.env)
+  const turnAttention = new DesktopTurnAttention(() => locale,
+    () => (mainWindow?.isFocused() ?? false) || (welcomeWindow?.isFocused() ?? false), () => { focusPrimaryWindow() })
+  app.once('will-quit', () => { turnAttention.dispose() })
   const backend = new DesktopBackendController((onFailure) => {
     const hostInspectPort = developmentHostInspectPort(development)
     const host = new DesktopHostProcess(resources.node, resources.dsh, activeProject,
       hostInspectPort, { ...hostEnvironment, DSH_CLIENT_VERSION: desktopClientVersion() }, onFailure,
       primaryRuntime,
-      resources, (next) => { platformView.setSession(next) })
+      resources, (next) => { platformView.setSession(next) }, { watchdog: healthConfig,
+        onTurnEnded: (completed) => { if (!quitting && process.env.NOVA_DESKTOP_TURN_NOTIFICATIONS !== 'false') turnAttention.ended(completed) } })
     return {
       start: async () => {
         const ready = await host.start()
@@ -650,7 +676,6 @@ async function main(): Promise<void> {
     // A confirmation on a hidden window would go unseen, so it waits for the next show; the mandatory
     // flow keeps its own taskbar and Dock attention instead.
     if (!isMandatory()) await windowShown()
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- A quit can begin while the show is awaited.
     if (quitting) return state
     return updates.install(version)
   }
@@ -929,7 +954,7 @@ async function main(): Promise<void> {
   const applicationIconPath = development ? join(app.getAppPath(), 'resources', 'icon-windows.png')
     : join(process.resourcesPath, 'icon.png')
   app.setAboutPanelOptions({
-    applicationName: 'DeepSeek Harness',
+    applicationName: NOVA_BRANDING.name,
     applicationVersion: app.getVersion(),
     // The release has no separate build number; omit Electron's bundle version.
     version: '',
@@ -956,6 +981,7 @@ async function main(): Promise<void> {
         click: () => { void showAbout().catch((error: unknown) => { console.error(error) }) } }
       : { label: currentDesktopLocale().messages.aboutMenu, role: 'about' },
     { type: 'separator' },
+    { label: currentDesktopLocale().messages.diagnosticsMenu, click: () => { void exportDiagnostics() } },
     { label: currentDesktopLocale().messages.checkUpdatesMenu, click: () => { void openUpdatePrompt(true) } },
     ...process.platform === 'darwin' || process.platform === 'win32'
       ? [{ label: currentDesktopLocale().messages.cliCommandMenu, click: () => { void commandManager.show() } }] : [],
@@ -979,18 +1005,87 @@ async function main(): Promise<void> {
   ]
   const refreshApplicationMenu = (): void => {
     Menu.setApplicationMenu(Menu.buildFromTemplate(process.platform === 'win32' ? devToolsItems : [{
-      label: darwin ? app.name : currentDesktopLocale().messages.application,
+      label: darwin ? currentDesktopLocale().messages.aboutProduct : currentDesktopLocale().messages.application,
       submenu: [...applicationItems(), ...devToolsItems],
     }, ...platformMenus()]))
     tray?.relabel()
   }
   refreshApplicationMenu()
+  let diagnosticExport: Promise<void> | undefined
+  const exportDiagnostics = (): Promise<void> => diagnosticExport ??= (async () => {
+    if (quitting) return
+    const messages = currentDesktopLocale().messages
+    try {
+      const options = { title: messages.diagnosticsTitle,
+        defaultPath: join(app.getPath('documents'), `nova-diagnostics-${Date.now()}.zip`),
+        filters: [{ name: 'ZIP', extensions: ['zip'] }] }
+      const parent = currentDialogWindow()
+      const selected = parent === undefined ? await dialog.showSaveDialog(options) : await dialog.showSaveDialog(parent, options)
+      if (selected.canceled || isQuitting()) return
+      await exportDesktopDiagnosticZip(selected.filePath, {
+        applicationVersion: app.getVersion(), platform: process.platform, architecture: process.arch,
+        electronVersion: process.versions.electron, nodeVersion: process.versions.node,
+        hostPhase: backend.state.phase, updatePhase: updateState.phase, watchdog: healthConfig ?? null,
+      }, activeProject, app.getPath('logs'))
+      await ordinaryMessageBox({ type: 'info', title: messages.diagnosticsTitle, message: messages.diagnosticsSaved })
+      shell.showItemInFolder(selected.filePath)
+    } catch (error) {
+      console.warn('desktop diagnostics: export failed', error)
+      await ordinaryMessageBox({ type: 'error', title: messages.diagnosticsTitle, message: messages.diagnosticsFailed })
+    }
+  })().finally(() => { diagnosticExport = undefined })
+  let profileOperation: Promise<void> | undefined
+  const changeProfile = (id: string): Promise<void> => profileOperation ??= (async () => {
+    const catalog = desktopProfiles
+    if (catalog === undefined || id === activeProfileId || quitting || isMandatory() || updateState.phase === 'installing') return
+    catalog.get(id)
+    const host = backend.host
+    let locked = false
+    try {
+      if (host !== undefined) { await host.updateTasks('lock'); locked = true }
+      if (!await quitConfirmation.confirm() || isQuitting() || isMandatory()) return
+      requireCleanStop = true
+      updateStopFailure = undefined
+      await backend.stop()
+      const stopFailure = currentStopFailure()
+      if (stopFailure !== undefined) throw stopFailure
+      await catalog.select(id)
+      app.relaunch()
+      quitWithoutConfirmation()
+    } catch (error) {
+      console.warn('desktop profiles: switch failed', error)
+      await ordinaryMessageBox({ type: 'error', title: locale.messages.profilesMenu, message: locale.messages.profileSwitchFailed })
+      if (backend.state.phase !== 'ready' && !isQuitting()) reportFatal(error, 'host')
+    } finally {
+      requireCleanStop = false
+      if (locked && !isQuitting() && backend.state.phase === 'ready' && host !== undefined) await host.updateTasks('unlock')
+    }
+  })().finally(() => { profileOperation = undefined })
+  const addProfile = (): Promise<void> => profileOperation ??= (async () => {
+    if (desktopProfiles === undefined || quitting) return
+    try {
+      const selected = await dialog.showOpenDialog({ title: locale.messages.profileDirectoryTitle,
+        properties: ['openDirectory', 'createDirectory'] })
+      if (selected.canceled || selected.filePaths[0] === undefined || isQuitting()) return
+      await desktopProfiles.add(selected.filePaths[0])
+      tray?.relabel()
+    } catch (error) {
+      console.warn('desktop profiles: registration failed', error)
+      await ordinaryMessageBox({ type: 'error', title: locale.messages.profilesMenu, message: locale.messages.profileSwitchFailed })
+    }
+  })().finally(() => { profileOperation = undefined })
   const trayIconPath = development ? join(app.getAppPath(), 'resources', 'tray-windows.ico') : join(process.resourcesPath, 'tray.ico')
   if (process.platform === 'win32') {
     // The tray is the way back to a hidden window; without it, relaunching the application still focuses it.
     try {
+      const catalog = desktopProfiles
       tray = new DesktopTray({ iconPath: trayIconPath, locale: currentDesktopLocale,
-        open: () => { focusPrimaryWindow() }, quit: () => { app.quit() } })
+        open: () => { focusPrimaryWindow() }, quit: () => { app.quit() }, diagnostics: () => { void exportDiagnostics() },
+        ...catalog === undefined ? {} : {
+          profiles: { list: () => catalog.list(), current: () => activeProfileId,
+            select: (id) => { void changeProfile(id).catch((error: unknown) => { reportFatal(error, 'main') }) },
+            add: () => { void addProfile().catch((error: unknown) => { reportFatal(error, 'main') }) } },
+        } })
     } catch (error) { console.warn('desktop tray: unavailable', error) }
   }
   const backgroundNotice = process.platform === 'win32'
@@ -1339,7 +1434,17 @@ async function main(): Promise<void> {
 
 const ownsDesktopInstance = claimDesktopSingleInstance(app, () => { focusPrimaryWindow() })
 
-if (ownsDesktopInstance) void app.whenReady().then(main).catch(async (error: unknown) => {
+if (ownsDesktopInstance) void (async () => {
+  desktopProfiles = new DesktopProfileCatalog(app.getPath('userData'), resolveDshHome())
+  activeProfileId = desktopProfiles.selectedId
+  const profile = desktopProfiles.get(activeProfileId)
+  process.env.DSH_HOME = profile.home
+  mkdirSync(profile.userData, { recursive: true, mode: 0o700 })
+  app.setPath('userData', profile.userData)
+  app.setPath('logs', join(profile.userData, 'logs'))
+  await app.whenReady()
+  await main()
+})().catch(async (error: unknown) => {
   const message = error instanceof Error ? error.message : String(error)
   console.error(error)
   const diagnosticFile = process.env.DSH_DESKTOP_DIAGNOSTIC_FILE

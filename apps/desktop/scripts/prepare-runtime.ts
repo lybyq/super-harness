@@ -1,7 +1,7 @@
 /** Prepare Desktop resources and publish their versions after every preparation stage succeeds. */
 
 import { execFileSync } from 'node:child_process'
-import { chmodSync, cpSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { join } from 'node:path'
 import { parseArgs } from 'node:util'
@@ -19,10 +19,36 @@ const RUNTIME_ROOT = BUILD_PATHS.runtime
 
 type DesktopTarget = ReturnType<typeof desktopTargetPlatform>
 
-/** Extract the target Electron distribution and return its embedded Node version. */
-async function prepareElectron({ platform, arch }: DesktopTarget): Promise<string> {
+/**
+ * 准备目标 Electron；离线模式校验本地备份的实际版本与架构，不访问下载服务。
+ * @param target 桌面目标平台与架构。
+ * @returns Electron 内嵌的 Node 版本；备份缺失、探测失败或版本不匹配时拒绝准备。
+ */
+async function prepareElectron(target: DesktopTarget): Promise<string> {
+  const { platform, arch } = target
   const require = createRequire(import.meta.url)
   const { version } = require('electron/package.json') as { version: string }
+  if (process.env.HARNESS_OFFLINE_BUILD === '1') {
+    const source = join(import.meta.dirname, '../../../.offline/assets/electron')
+    const saved = JSON.parse(readFileSync(join(source, 'package.json'), 'utf8')) as { version?: unknown }
+    const executableName = platform === 'win32' ? 'electron.exe' : 'Electron.app/Contents/MacOS/Electron'
+    const executable = join(source, 'dist', executableName)
+    const inspected = JSON.parse(execFileSync(executable, ['-p',
+      'JSON.stringify({platform:process.platform,arch:process.arch,electron:process.versions.electron,node:process.versions.node})'],
+    { encoding: 'utf8', timeout: 30_000, windowsHide: true, env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' } })) as {
+      platform: string
+      arch: string
+      electron: string
+      node: string
+    }
+    if (saved.version !== version || inspected.electron !== version || inspected.platform !== platform || inspected.arch !== arch) {
+      throw new Error('desktop runtime: offline Electron version or target mismatch; restore the locked distribution')
+    }
+    // 本地备份通过真实二进制检查后才复制；缺失或不匹配时终止，不回退到公网下载。
+    rmSync(BUILD_PATHS.electron, { recursive: true, force: true })
+    cpSync(join(source, 'dist'), BUILD_PATHS.electron, { recursive: true })
+    return inspected.node
+  }
   const archive = await packagingStep(process.env.DSH_DESKTOP_PACKAGING_RUN_DIR, 'download:electron',
     () => downloadArtifact({ version, platform, arch, artifactName: 'electron', cacheRoot: BUILD_PATHS.downloads }))
   rmSync(BUILD_PATHS.electron, { recursive: true, force: true })

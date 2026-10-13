@@ -34,7 +34,7 @@ node --import tsx apps/desktop/scripts/prepare-installed-update.ts init 0.1.6-al
 通过仓库的仅准备流程生成新源码资源，再生成共享启动入口、两份独立的版本绑定运行时和冻结的应用文件。将 `<run.json>` 替换为批次清单路径。仅准备流程构建并检查原始运行时，但在签名前停止；其余命令绝不调用签名器或安装器。这些命令拒绝覆盖已有批次产物；出错后保留不完整物料，不在其上重试。
 
 ```powershell
-node apps/desktop/node_modules/pnpm/bin/pnpm.mjs --dir apps/desktop run prepare:package win-x64
+node apps/desktop/node_modules/pnpm/bin/pnpm.cjs --dir apps/desktop run prepare:package win-x64
 node --import tsx apps/desktop/scripts/prepare-installed-update.ts bootstrap "<run.json>"
 node --import tsx apps/desktop/scripts/prepare-installed-update.ts runtime "<run.json>"
 node --import tsx apps/desktop/scripts/prepare-installed-update.ts application "<run.json>"

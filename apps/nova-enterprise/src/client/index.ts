@@ -2,6 +2,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { MainPanelId } from '@deepseek-ai/dsh-client-ui-layout/client'
 import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
+import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
 import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
 import type {} from '@deepseek-ai/dsh-client-locale/client'
 import type { PropsRuntime } from '@deepseek-ai/dsh-client-ui-slots'
@@ -9,6 +10,7 @@ import { createElement } from 'react'
 import { IconSearchOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 import { HubPanel } from './HubPanel.tsx'
 import { en, zh } from './locales.ts'
+import { NovaBrandMark, NovaBrandName } from './NovaBrand.tsx'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -35,6 +37,16 @@ function HubIcon({ size }: PropsRuntime<'sidebar.panellist'>) {
 export function apply(ctx: Context): void {
   ctx.effect(() => ctx.locale.register(NS, { zh, en }), 'nova-hub: dictionaries')
   const t = ctx.locale.bind(NS)
+  const brand = window.novaBrand
+  if (brand) {
+    // 优先级低于官方默认项；撤销本插件后原生品牌自动恢复。
+    ctx.slots.inject('sidebar.brand.mark', () => ctx.slots.register({ name: 'sidebar.brand.mark', priority: -100 },
+      props => createElement(NovaBrandMark, { ...props, brand })))
+    ctx.slots.inject('sidebar.brand.name', () => ctx.slots.register({ name: 'sidebar.brand.name', priority: -100 },
+      () => createElement(NovaBrandName, { brand })))
+    ctx.slots.inject('conversation.hero.brand.mark', () => ctx.slots.register({ name: 'conversation.hero.brand.mark', priority: -100 },
+      props => createElement(NovaBrandMark, { ...props, brand })))
+  }
   ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: PANEL, locale: NS }, HubPanel))
   ctx.slots.inject('sidebar.panellist', () =>
     ctx.slots.register(

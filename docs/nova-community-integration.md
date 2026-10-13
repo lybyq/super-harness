@@ -57,6 +57,19 @@ For a requested third-party feature, inspect its license, exact SDK imports, ver
 
 ## Intranet inclusion and policy
 
+### Additional live-monitoring and chart plugins
+
+The latest upstream release checked on 2026-10-12 is [0.4.6](https://github.com/zhu1090093659/dsh-web/releases/tag/v0.4.6); Nova still pins 0.4.5 and does not automatically change its reviewed dependency set. The following independently maintained plugins are not included in that twenty-package set. Their published descriptions identify useful additions, not verified Nova compatibility.
+
+| Plugin | What it shows | Intranet qualification |
+|---|---|---|
+| [dsh-context](https://github.com/bowenliang123/dsh-context) | Context composition, trends, activity heatmaps, and live Fleet agent cards | Built in at 0.69.1 with a balance-request disable patch; qualify real intranet sessions and mirror its dependency closure |
+| [dsh-system-monitor-plugin](https://github.com/JularDepick/dsh-system-monitor-plugin) | CPU and memory curves for Host and reported child processes | Verify Windows process detection, sampling cost and child lifecycle |
+| [@bryan-cmf/dsh-infra-observability](https://github.com/Bryan-cmf/dsh-infra-observability) | Tool/Skill success rates and a live execution trail | Verify projection compatibility, event meanings and retention |
+| [@loongsuite/dsh-plugin](https://github.com/loongsuite/dsh-plugin) | Turn/step/LLM/tool traces and metrics through OTLP | Requires an internal collector/dashboard; explicitly disable content capture and review export destinations |
+
+Context ships as an independent additional bundle; see [desktop operations](user/nova-desktop-operations.md) for usage and limitations. System Monitor and the two exporters remain candidates, not installed features. OTLP traces require a separate enterprise deployment. Community Usage, Session Archive and Git Graph remain independent. Do not enable overlapping exporters or public collectors by default, or treat installation as compatibility proof.
+
 Nova's [deployment defaults](../apps/desktop-host/nova.enterprise.patch.yml) disable the five public-facing modules listed above. Eight of the nineteen modules are disabled in total, including three upstream defaults. Disabled packages remain included; they are not deleted from the repository dependency closure.
 
 Reviewed dependency patches remove automatic public usage heartbeats from twelve client artifacts. Aggregate state failures leave child UIs closed. [Runtime patch policy](../apps/desktop/scripts/runtime-patch-policy.ts) applies the same patch bytes during packaging and verifies their lockfile hashes. These are scoped changes, not a general outbound firewall; official account, analytics, update services, remote assets, and manual external links still require review.

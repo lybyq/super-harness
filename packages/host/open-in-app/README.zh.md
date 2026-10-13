@@ -63,6 +63,8 @@ kind: "package-reference"
 
 解析惰性执行，每主机进程一次，在首个需要它的请求上进行；安装应用要下次重启后生效，卸载方向则立即自愈——启动时发现可执行文件已消失会只重解析该条目一次，无法再证明时把它从列表中移除。图标路由在每个可提取的平台上提供应用真实图标：macOS 上 bundle 的 `.icns` 转 128px PNG，Windows 上可执行文件的关联图标转 32px PNG，Linux 上 desktop 条目在 hicolor 主题中的图标（PNG 或 SVG）；提取不到的图标应答 404，浏览器表面渲染通用占位图形。
 
+外部 GUI 启动先移除继承的 `ELECTRON_RUN_AS_NODE`，再应用适配器显式环境。Desktop 使用这个标记运行 Host，但 VS Code 等编辑器必须按应用启动。GitHub Desktop 等刻意以 CLI 模式运行 Electron 的适配器自行提供 Node 模式值。
+
 ### `./shared` 子路径
 
 路由路径与 wire 载荷类型以浏览器安全的 `./shared` 子路径发布（只有常量与类型，没有运行时身份）；浏览器包把它内联进自己的 client bundle。路由或载荷的变更落在 `src/shared.ts`，两个包都从那里获取。

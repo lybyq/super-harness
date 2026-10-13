@@ -1,0 +1,31 @@
+# Bilingual-pair consistency record for nova-roles.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/user/nova-roles.md
+/:
+  en: bb4c7c269d881b24
+  zh: f1659acbab2f0c6c
+/harness-role-composition-and-role-teams:
+  en: e55e9d47700c37ca
+  zh: 069e8607e6bf895d
+/harness-role-composition-and-role-teams/choose-between-two-workflows:
+  en: c4b2ad72b5b62a5c
+  zh: e8334318d1280365
+/harness-role-composition-and-role-teams/1-apply-a-single-session-composition:
+  en: c8751cb481e41123
+  zh: 1aa5c74f73f0f0df
+/harness-role-composition-and-role-teams/2-start-a-role-team:
+  en: 486bb5b623b3ac04
+  zh: 28501e975c7ddfb2
+/harness-role-composition-and-role-teams/3-review-team-code:
+  en: b5225dff60cdf3d1
+  zh: 4a9fa8e68deacf6a
+/harness-role-composition-and-role-teams/4-how-capabilities-and-permissions-enter-a-session:
+  en: bc7de854721bdcb7
+  zh: cd8414d71511482a
+/harness-role-composition-and-role-teams/development-and-acceptance:
+  en: e5c1dd0104e0f969
+  zh: b4dd00dcf4177473
+/harness-role-composition-and-role-teams/dev-note:
+  en: 392f9ea86806ce8c
+  zh: 94dbd310e2c06950

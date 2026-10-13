@@ -86,6 +86,7 @@ External packages installed for runtime use or distributed inside the prebuilt b
 | [`compression`](https://github.com/expressjs/compression) | MIT |
 | [`diff`](https://github.com/kpdecker/jsdiff) | BSD-3-Clause |
 | [`dompurify`](https://github.com/cure53/DOMPurify) | (MPL-2.0 OR Apache-2.0) |
+| [`dsh-context`](https://github.com/bowenliang123/dsh-context) | Apache-2.0 |
 | [`electron-updater`](https://github.com/electron-userland/electron-builder) | MIT |
 | [`eventsource-parser`](https://github.com/rexxars/eventsource-parser) | MIT |
 | [`exceljs`](https://github.com/exceljs/exceljs) | MIT |
@@ -142,6 +143,7 @@ External packages installed for runtime use or distributed inside the prebuilt b
 
 pnpm applies local patches to the following packages at install time, so shipped artifacts carry modified copies; each patch file is the complete record of the modification:
 
+- `dsh-context@0.69.1` — [`patches/dsh-context@0.69.1.patch`](patches/dsh-context@0.69.1.patch)
 - `@linxin666/dsh-client-ui-git-graph@0.4.5` — [`patches/@linxin666__dsh-client-ui-git-graph@0.4.5.patch`](patches/@linxin666__dsh-client-ui-git-graph@0.4.5.patch)
 - `@linxin666/dsh-client-ui-market@0.4.5` — [`patches/@linxin666__dsh-client-ui-market@0.4.5.patch`](patches/@linxin666__dsh-client-ui-market@0.4.5.patch)
 - `@linxin666/dsh-client-ui-plugin-manager@0.4.5` — [`patches/@linxin666__dsh-client-ui-plugin-manager@0.4.5.patch`](patches/@linxin666__dsh-client-ui-plugin-manager@0.4.5.patch)

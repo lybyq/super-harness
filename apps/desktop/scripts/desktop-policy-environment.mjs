@@ -11,11 +11,22 @@ function origin(value, name) {
 }
 
 /**
- * Resolve mandatory policy metadata before preparing artifacts or accessing signing hardware.
- * @param {NodeJS.ProcessEnv} environment File-owned release settings; the unselected origin is not required.
- * @returns {{ origin: string, allowedPageOrigins: string[], authentication: 'anonymous' | 'feishu-test', [key: string]: unknown }} Selected policy.
+ * 解析部署文件中的强更策略；明确指定的未签名离线测试包不携带更新服务元数据。
+ * @param {NodeJS.ProcessEnv} environment 打包环境；OFFLINE_TEST=true 必须同时处于 UNSIGNED=1 模式。
+ * @returns {{ origin: string, allowedPageOrigins: string[], authentication: 'anonymous' | 'feishu-test', [key: string]: unknown } | undefined} 已校验策略；离线测试包返回 undefined。
+ * @throws {Error} 配置非法、签名发布使用离线测试选项或选定更新源缺失时，在打包前终止。
  */
 export function resolveDesktopPolicyEnvironment(environment) {
+  const offlineTest = environment.DSH_DESKTOP_OFFLINE_TEST?.trim() ?? ''
+  if (offlineTest !== '' && offlineTest !== 'true' && offlineTest !== 'false') {
+    throw new Error('desktop package: DSH_DESKTOP_OFFLINE_TEST must be true or false')
+  }
+  if (offlineTest === 'true') {
+    if (environment.DSH_DESKTOP_UNSIGNED !== '1') {
+      throw new Error('desktop package: DSH_DESKTOP_OFFLINE_TEST=true requires an unsigned test build')
+    }
+    return undefined
+  }
   const deployment = resolveDesktopAutoUpdateEnvironment(environment)
   const name = deployment === 'test' ? 'DSH_DESKTOP_MANDATORY_UPDATE_TEST_ORIGIN' : 'DSH_DESKTOP_MANDATORY_UPDATE_PROD_ORIGIN'
   const selected = origin(environment[name], name)

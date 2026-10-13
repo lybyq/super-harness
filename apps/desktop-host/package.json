@@ -19,6 +19,10 @@
   "dependencies": {
     "@deepseek-ai/dsh-nova-enterprise": "workspace:*",
     "@linxin666/dsh-web-all": "0.4.5",
+    "dsh-context": "0.69.1",
+    "@deepseek-ai/dsh-session": "workspace:*",
+    "@deepseek-ai/dsh-client-ui-primitives": "workspace:*",
+    "@deepseek-ai/schemastery": "workspace:~",
     "koffi": "^3.1.0",
     "@deepseek-ai/libreoffice-kit": "^0.1.5",
     "@deepseek-ai/cordis": "workspace:~",

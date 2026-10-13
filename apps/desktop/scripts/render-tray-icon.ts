@@ -1,5 +1,5 @@
 /**
- * Render the Windows tray icon with an enlarged whale from `resources/icon-windows.svg`.
+ * 根据 `resources/icon-windows.svg` 生成 Windows 托盘图标，并适当放大 Nova 标记。
  *
  * The tray shows the icon at 16 logical pixels, so Windows picks one of the
  * bundled bitmaps by display scale. Each size is rasterized from the vector
@@ -101,7 +101,7 @@ export async function renderTrayIconEntries(svg: Buffer, sizes: readonly number[
   const source = svg.toString('utf8')
   const glyph = '<g id="tray-glyph"'
   if (!source.includes(glyph)) throw new Error('tray icon: SVG requires a tray-glyph group')
-  // Scale around the application tile center, retaining its background and the whale's aspect ratio.
+  // 围绕应用图标中心缩放，保留背景与标记比例。
   const tray = Buffer.from(source.replace(glyph, `${glyph} transform="translate(552 544) scale(1.2) translate(-552 -544)"`))
   return Promise.all(sizes.map(async size => ({
     size,

@@ -132,6 +132,10 @@ export function resolveDesktopAutoUpdateConfig(env, platform, arch) {
   const target = resolveDesktopAutoUpdateTarget(platform, arch)
   const deployment = UPDATE_ENVIRONMENTS[environment]
   let origin = deployment.fixedOrigin
+  // 企业生产包可使用内部 HTTPS 更新源；缺省仍保持上游发布行为。
+  if (environment === 'production' && env.DOWNLOAD_PROD_ORIGIN !== undefined) {
+    origin = httpsOrigin(requiredEnvironmentValue(env, 'DOWNLOAD_PROD_ORIGIN'), 'DOWNLOAD_PROD_ORIGIN')
+  }
   if (origin === undefined) {
     const { originEnvName } = deployment
     if (originEnvName === undefined) throw new Error('desktop auto-update: selected deployment has no origin')

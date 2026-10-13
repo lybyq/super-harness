@@ -33,9 +33,16 @@ function patchHash(bytes: Buffer): string {
   return createHash('sha256').update(bytes).digest('hex')
 }
 
+/** @param entry pnpm 10 的 { hash, path } 记录或已有锁文件中的摘要。 @returns 可比对的补丁摘要，非法记录不通过校验。 */
+function lockPatchHash(entry: unknown): string | undefined {
+  if (typeof entry === 'string') return entry
+  if (typeof entry === 'object' && entry !== null && 'hash' in entry && typeof entry.hash === 'string') return entry.hash
+  return undefined
+}
+
 /**
  * Stage selected patches and explicit overrides before Desktop resolves its temporary lockfile.
- * Every root patch must be classified; shared bytes must match the root lockfile's pnpm 11 hash.
+ * 每份根目录补丁必须明确分类；共享补丁的字节摘要必须与根目录锁文件一致。
  * @param projectRoot Disposable project containing pnpm-workspace.yaml, outside the repository root itself.
  * @param repositoryRoot Source repository; its files remain read-only.
  * @param policy Desktop patch decisions, including optional runtime-only files relative to the repository.
@@ -52,7 +59,7 @@ export function prepareRuntimePatches(
     patchedDependencies: Record<string, string>
   }
   const sourceLock = yaml.load(readFileSync(join(repositoryRoot, 'pnpm-lock.yaml'), 'utf8')) as {
-    patchedDependencies: Record<string, string>
+    patchedDependencies: Record<string, unknown>
   }
   for (const spec of Object.keys(source.patchedDependencies)) {
     if (!Object.hasOwn(policy, spec)) throw new Error(`desktop patches: classify the workspace patch ${spec}`)
@@ -71,7 +78,7 @@ export function prepareRuntimePatches(
     }
     const bytes = readFileSync(join(repositoryRoot, sourcePath))
     const hash = patchHash(bytes)
-    if (rule.scope === 'shared' && sourceLock.patchedDependencies[spec] !== hash) {
+    if (rule.scope === 'shared' && lockPatchHash(sourceLock.patchedDependencies[spec]) !== hash) {
       throw new Error(`desktop patches: shared patch hash differs from the root lockfile: ${spec}`)
     }
     selected.push({ spec, ...identity, path: `patches/desktop-${selected.length}.patch`, hash, bytes })
@@ -98,7 +105,7 @@ export function prepareRuntimePatches(
  */
 export function verifyRuntimePatches(projectRoot: string, plan: PreparedRuntimePatches): void {
   const lock = yaml.load(readFileSync(join(projectRoot, 'pnpm-lock.yaml'), 'utf8')) as {
-    patchedDependencies?: Record<string, string>
+    patchedDependencies?: Record<string, unknown>
     packages?: Record<string, { version?: string }>
   }
   for (const patch of plan.patches) {
@@ -108,7 +115,7 @@ export function verifyRuntimePatches(projectRoot: string, plan: PreparedRuntimeP
     if (patchHash(readFileSync(join(projectRoot, patch.path))) !== patch.hash) {
       throw new Error(`desktop patches: staged patch bytes changed: ${patch.spec}`)
     }
-    if (lock.patchedDependencies?.[patch.spec] !== patch.hash) {
+    if (lockPatchHash(lock.patchedDependencies?.[patch.spec]) !== patch.hash) {
       throw new Error(`desktop patches: lockfile patch hash mismatch: ${patch.spec}`)
     }
   }

@@ -4,5 +4,8 @@
   { "id": "harness-pine", "name": "松林", "nameEn": "Pine", "cssSha256": "cc3fd8b58cd61176ae808b239807eceea00ac7aadaf9c2bd8f091d221b36dd1b" },
   { "id": "harness-polar", "name": "极地", "nameEn": "Polar", "cssSha256": "d64171ff32c9cce7b5ae9a62dd3b140296184d4389729f51b701738bde5864f0" },
   { "id": "harness-warm-paper", "name": "暖纸", "nameEn": "Warm Paper", "cssSha256": "5dfa4f7b5922417600ca8f5337f8042ebc6e3efdf70d0fd9c73a675085b5d154" },
-  { "id": "harness-mist", "name": "雾青", "nameEn": "Mist", "cssSha256": "ae98d8fbb2ec01f1c66ce4152ba14c1488fdebd86681d73f4798f645638375b5" }
+  { "id": "harness-mist", "name": "雾青", "nameEn": "Mist", "cssSha256": "ae98d8fbb2ec01f1c66ce4152ba14c1488fdebd86681d73f4798f645638375b5" },
+  { "id": "harness-dune", "name": "静沙", "nameEn": "Quiet Dunes", "cssSha256": "ef819b0141c34154423a59b7f3decb00d52d6927b6f028b98b5d5a282e124b94" },
+  { "id": "harness-horizon", "name": "远山", "nameEn": "Distant Horizon", "cssSha256": "ccbb78bb50ce01d68a8d5fa9457e5e5ca2651e028a35954fdbc84c80c1aa1347" },
+  { "id": "harness-arc", "name": "弧境", "nameEn": "Architectural Arc", "cssSha256": "59e43a8657759e5dba7a34899f32cc3151c795a35b97d4cb25898ef128d03971" }
 ]

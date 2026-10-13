@@ -5,8 +5,8 @@ import { afterEach, describe, expect, it } from 'vitest'
 import { load as loadYaml } from 'js-yaml'
 import { createRuntimeResolution, loadProfileDirectory, readProfileManifest } from '@deepseek-ai/dsh-app-boot'
 import { applyEntryPatches } from '@deepseek-ai/cordis-plugin-include'
-import { createDevelopmentProjectMetadata, createPluginProfile, DesktopProjectManager } from '../src/project-manager.ts'
-import { NOVA_COMMUNITY_PACKAGE, NOVA_COMMUNITY_PINS, NOVA_DESKTOP_BUNDLES } from '../src/nova-community.ts'
+import { createDevelopmentProjectMetadata, createPluginProfile, DesktopProjectManager, reconcileNovaContextBundle } from '../src/project-manager.ts'
+import { NOVA_COMMUNITY_PACKAGE, NOVA_COMMUNITY_PINS, NOVA_CONTEXT_PACKAGE, NOVA_CONTEXT_VERSION, NOVA_DESKTOP_BUNDLES } from '../src/nova-community.ts'
 import { DESKTOP_HOST_PACKAGE } from '../src/core-package-set.ts'
 import { DESKTOP_HOST_PROTOCOL_VERSION } from '../src/host-protocol.ts'
 import { resolveDesktopPaths } from '../src/paths.ts'
@@ -86,6 +86,7 @@ describe('Nova community desktop composition', () => {
       files: string[]
     }
     expect(manifest.dependencies[NOVA_COMMUNITY_PACKAGE]).toBe(NOVA_COMMUNITY_PINS[NOVA_COMMUNITY_PACKAGE])
+    expect(manifest.dependencies[NOVA_CONTEXT_PACKAGE]).toBe(NOVA_CONTEXT_VERSION)
     expect(manifest.dsh.bundle.patch).toBe('./nova.enterprise.patch.yml')
     expect(manifest.files).toContain('nova.enterprise.patch.yml')
   })
@@ -109,6 +110,7 @@ describe('Nova community desktop composition', () => {
       expect(row?.disabled, id).not.toBe(true)
     }
     expect(profile.layers.at(-1)?.packageName).toBe(DESKTOP_HOST_PACKAGE)
+    expect(rows.find(row => row.id === NOVA_CONTEXT_PACKAGE)?.name).toBe(NOVA_CONTEXT_PACKAGE)
   })
 
   it('resolves community Host exports from the Desktop Host installation rather than only parsing bundle patches', async () => {
@@ -125,10 +127,36 @@ describe('Nova community desktop composition', () => {
       name: NOVA_COMMUNITY_PACKAGE, version: '0.4.5', scope: 'installation',
     }))
     expect(resolution.entries).toContainEqual(expect.objectContaining({
+      name: NOVA_CONTEXT_PACKAGE, version: NOVA_CONTEXT_VERSION, scope: 'installation',
+    }))
+    expect(resolution.entries).toContainEqual(expect.objectContaining({
       name: '@deepseek-ai/dsh-nova-enterprise', version: '0.2.1-alpha.2', scope: 'installation',
     }))
     const inventory = readDesktopRuntime(project).sharedPackages
     expect(inventory).toContainEqual({ name: NOVA_COMMUNITY_PACKAGE, version: '0.4.5',
       path: 'node_modules/@linxin666/dsh-web-all' })
+  })
+
+  it('adds context to an existing Nova composition once and preserves later removal and custom profiles', async () => {
+    const root = temporaryRoot()
+    const path = join(root, 'package.json')
+    const legacy = { private: true, custom: 'keep', dsh: { profile: {
+      bundles: NOVA_DESKTOP_BUNDLES.filter(name => name !== NOVA_CONTEXT_PACKAGE),
+    } } }
+    writeFileSync(path, JSON.stringify(legacy))
+    expect(await reconcileNovaContextBundle(root)).toBe(true)
+    const migrated = JSON.parse(readFileSync(path, 'utf8'))
+    expect(migrated.custom).toBe('keep')
+    expect(migrated.dsh.profile.bundles).toEqual(NOVA_DESKTOP_BUNDLES)
+    migrated.dsh.profile.bundles = legacy.dsh.profile.bundles
+    writeFileSync(path, JSON.stringify(migrated))
+    expect(await reconcileNovaContextBundle(root)).toBe(false)
+    expect(JSON.parse(readFileSync(path, 'utf8')).dsh.profile.bundles).toEqual(legacy.dsh.profile.bundles)
+    for (const bundles of [['custom'], ['@deepseek-ai/dsh-base', '@deepseek-ai/dsh-web-app']]) {
+      const raw = JSON.stringify({ dsh: { profile: { bundles } } })
+      writeFileSync(path, raw)
+      expect(await reconcileNovaContextBundle(root)).toBe(false)
+      expect(readFileSync(path, 'utf8')).toBe(raw)
+    }
   })
 })

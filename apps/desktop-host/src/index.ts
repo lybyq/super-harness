@@ -14,6 +14,7 @@ import { installDesktopUpdateTaskControl } from './update-tasks.ts'
 import { installDesktopQuitInspection } from './quit-inspection.ts'
 import { installPlatformSessionPublisher } from './platform-session.ts'
 import { installOfficeEngineResolution } from './office-engine.ts'
+import { installDesktopTurnNotices } from './turn-notices.ts'
 
 async function main(): Promise<void> {
   const runtimeDir = process.argv[2] as string
@@ -60,6 +61,10 @@ async function main(): Promise<void> {
   process.on('message', (message: unknown) => {
     if (typeof message !== 'object' || message === null || !('type' in message)) return
     if (message.type === 'shutdown') { void stop(); return }
+    if (message.type === 'health' && 'requestId' in message && Number.isSafeInteger(message.requestId)) {
+      void send({ type: 'health', requestId: message.requestId }).catch((error: unknown) => { console.error(error) })
+      return
+    }
     if (message.type === 'quit-inspection') {
       if (!('requestId' in message) || !Number.isSafeInteger(message.requestId)) return
       const requestId = message.requestId
@@ -93,6 +98,9 @@ async function main(): Promise<void> {
   const { ctx } = await application
   control.updateTasks = installDesktopUpdateTaskControl(ctx)
   control.quitInspection = installDesktopQuitInspection(ctx)
+  installDesktopTurnNotices(ctx, (notice) => {
+    if (stopping === undefined && process.connected) process.send?.(notice)
+  })
   await ctx.plugin(desktopOffice, {
     runtimeDir,
     source: process.argv[4] ?? join(runtimeDir, '..', 'runtime', 'primary-runtime'),

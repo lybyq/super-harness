@@ -14,6 +14,7 @@ import {
   writeSync,
 } from 'node:fs'
 import { join } from 'node:path'
+import { writeFileAtomic } from '@deepseek-ai/dsh-atomic-write'
 import {
   DESKTOP_HOST_PACKAGE,
   desktopCorePackageOverrides,
@@ -22,7 +23,7 @@ import {
 import type { DesktopPaths } from './paths.ts'
 import type { DesktopRelease } from './release.ts'
 import { readDesktopRuntime } from './runtime-tree.ts'
-import { NOVA_COMMUNITY_PINS, NOVA_DESKTOP_BUNDLES } from './nova-community.ts'
+import { NOVA_COMMUNITY_PACKAGE, NOVA_COMMUNITY_PINS, NOVA_CONTEXT_PACKAGE, NOVA_CONTEXT_VERSION, NOVA_DESKTOP_BUNDLES } from './nova-community.ts'
 import {
   initProfile, PROFILE_TEMPLATES, removeLinkProjections, sanitizeProfile, type ProfileTemplate,
 } from '@deepseek-ai/dsh-app-boot'
@@ -82,11 +83,12 @@ export class DesktopProjectManager {
    * Load application metadata and prepare the external plugin profile without installing packages.
    */
   async applyRelease(): Promise<void> {
-    await this.withLock(() => {
+    await this.withLock(async () => {
       // Validation only: an unreadable or mismatched runtime descriptor stops preparation before the Host starts.
       readDesktopRuntime(this.runtime.dsh)
       migrateProfileSettings(this.paths.profile)
       createPluginProfile(this.paths.profile)
+      await reconcileNovaContextBundle(this.paths.profile)
       removeLinkProjections(this.paths.profile)
     })
   }
@@ -145,7 +147,7 @@ export function createRuntimeProjectMetadata(projectDir: string, release: Deskto
   writeJson(join(projectDir, 'package.json'), manifest)
   writeFileSync(
     join(projectDir, 'pnpm-workspace.yaml'),
-    workspaceFile({ ...NOVA_COMMUNITY_PINS, ...desktopCorePackageOverrides(packageSet) }),
+    workspaceFile({ ...NOVA_COMMUNITY_PINS, [NOVA_CONTEXT_PACKAGE]: NOVA_CONTEXT_VERSION, ...desktopCorePackageOverrides(packageSet) }),
     { mode: 0o600 },
   )
 }
@@ -178,4 +180,27 @@ export function createDevelopmentProjectMetadata(projectDir: string, release: De
  */
 export function createPluginProfile(projectDir: string, bundles: readonly string[] = NOVA_DESKTOP_BUNDLES): void {
   initProfile(projectDir, bundles)
+}
+
+/**
+ * 给已有 Nova 默认组合补入上下文插件一次；自定义组合和官方故障恢复组合不变。
+ * @param projectDir 已持有 Profile 锁的目录；调用方必须先停止 Host。
+ * @returns 是否原子更新清单；更新后用户主动移除插件不会被后续启动覆盖。
+ */
+export async function reconcileNovaContextBundle(projectDir: string): Promise<boolean> {
+  const path = join(projectDir, 'package.json')
+  const manifest: unknown = JSON.parse(readFileSync(path, 'utf8'))
+  if (typeof manifest !== 'object' || manifest === null || Array.isArray(manifest)) {
+    throw new Error('desktop profile: expected package.json to contain an object')
+  }
+  if ('novaContextReconciled' in manifest && manifest.novaContextReconciled === true) return false
+  if (!('dsh' in manifest) || typeof manifest.dsh !== 'object' || manifest.dsh === null
+    || !('profile' in manifest.dsh) || typeof manifest.dsh.profile !== 'object' || manifest.dsh.profile === null
+    || !('bundles' in manifest.dsh.profile) || !Array.isArray(manifest.dsh.profile.bundles)) return false
+  const bundles: unknown[] = manifest.dsh.profile.bundles
+  if (!bundles.every((item): item is string => typeof item === 'string')
+    || !bundles.includes(NOVA_COMMUNITY_PACKAGE) || !bundles.includes(DESKTOP_HOST_PACKAGE)) return false
+  if (!bundles.includes(NOVA_CONTEXT_PACKAGE)) bundles.splice(bundles.indexOf(DESKTOP_HOST_PACKAGE), 0, NOVA_CONTEXT_PACKAGE)
+  await writeFileAtomic(path, `${JSON.stringify({ ...manifest, novaContextReconciled: true }, null, 2)}\n`, { mode: 0o600 })
+  return true
 }

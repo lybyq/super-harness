@@ -4,6 +4,8 @@
 
 ## 概述
 
+日常开发、内网交付与角色／团队使用，从[桌面操作手册总览](../docs/nova-desktop-handbook.zh.md)开始。
+
 本目录保存 Nova 自有企业集成代码。桌面应用继续使用官方 [Electron 应用](../apps/desktop/README.zh.md)，现有 Nova Hub 仍是独立服务。[upstream.json](upstream.json) 固定官方源码基线。凭据和实际内网部署地址不得进入这个公开仓库。
 
 ## Hub 网络连接

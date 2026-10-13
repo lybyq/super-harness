@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, it, vi } from 'vitest'
 import { installMandatoryUpdateOverlay } from '../src/preload-mandatory-overlay.ts'
 import { syncWindowsAppearance } from '../src/preload-windows.ts'
 import { DESKTOP_IPC, type DshDesktopProductApi } from '../src/ipc.ts'
+import { NOVA_BRANDING } from '../src/branding.ts'
 
 const electron = vi.hoisted(() => ({
   contextBridge: { exposeInMainWorld: vi.fn() },
@@ -18,6 +19,18 @@ vi.mock('../src/preload-mandatory-overlay.ts', () => ({ installMandatoryUpdateOv
 
 beforeEach(() => { vi.stubGlobal('process', { ...process, isMainFrame: true }) })
 afterEach(() => { document.body.replaceChildren(); vi.unstubAllGlobals(); vi.restoreAllMocks(); vi.clearAllMocks(); vi.resetModules() })
+
+it('exposes readonly public branding only to the owned application main frame', async () => {
+  vi.stubGlobal('location', new URL('dsh-app://app/'))
+  await import('../src/preload-app.ts')
+  expect(electron.contextBridge.exposeInMainWorld).toHaveBeenCalledWith('novaBrand', NOVA_BRANDING)
+  expect(Object.isFrozen(NOVA_BRANDING)).toBe(true)
+  vi.resetModules()
+  electron.contextBridge.exposeInMainWorld.mockClear()
+  vi.stubGlobal('process', { ...process, isMainFrame: false })
+  await import('../src/preload-app.ts')
+  expect(electron.contextBridge.exposeInMainWorld.mock.calls.some(([name]) => name === 'novaBrand')).toBe(false)
+})
 
 it('reads only native login API-key presence through the onboarding bridge', async () => {
   vi.stubGlobal('location', new URL('dsh-app://app/'))
@@ -61,6 +74,7 @@ it.each(['dsh-app://shell/plugin-manager.html', 'dsh-app://other/index.html', 'h
   vi.stubGlobal('location', new URL(url))
   await import('../src/preload-app.ts')
   expect(electron.contextBridge.exposeInMainWorld).toHaveBeenCalledWith('dshDesktop', { protocolVersion: 1 })
+  expect(electron.contextBridge.exposeInMainWorld.mock.calls.some(([name]) => name === 'novaBrand')).toBe(false)
   expect(electron.ipcRenderer.on.mock.calls.some(([channel]) => channel === DESKTOP_IPC.browserOpenRequested)).toBe(false)
 })
 

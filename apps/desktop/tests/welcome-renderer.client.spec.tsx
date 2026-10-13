@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { Welcome } from '../src/client/WelcomePage.tsx'
+import { NOVA_BRANDING } from '../src/branding.ts'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { resolveDesktopLocale } from '../src/locale.ts'
 import type { AccountView } from '@deepseek-ai/dsh-deepseek-account/types'
@@ -36,7 +37,7 @@ function mount(language = 'zh-CN', takeNotice = vi.fn<() => Promise<WelcomeNotic
   const copy = () => {
     const heading = document.querySelector('main')!.getAttribute('aria-labelledby')!
     return [
-      document.title, document.querySelector('img')!.alt, document.getElementById(heading)!.textContent,
+      document.title, document.querySelector('.nova-brand-name')!.textContent, document.getElementById(heading)!.textContent,
       ...heading === 'welcome-heading' ? [document.querySelector('#welcome-description')!.textContent] : [],
       ...heading === 'key-title' ? [document.querySelector('#key-description')!.textContent, `${input.placeholder} [password]`] : [],
       ...[...document.querySelectorAll('button')].filter(item => item.closest('[hidden]') === null)
@@ -51,7 +52,8 @@ describe('desktop welcome presentation', () => {
   it.each(['zh-CN', 'en'])('renders the %s entry and API-key step', async (language) => {
     const view = mount(language)
     expect(view.document.documentElement.lang).toBe(language)
-    expect(view.document.querySelector('img')!.getAttribute('src')).toBe('assets/welcome-brand.svg')
+    expect(view.document.querySelector('img')!.getAttribute('src')).toBe(NOVA_BRANDING.fallbackLogoUrl)
+    expect(view.document.querySelectorAll('img')[1]!.getAttribute('src')).toBe(NOVA_BRANDING.logoUrl)
     await expect(view.copy()).toMatchFileSnapshot(`./expected/welcome/${language}.expected.txt`)
     fireEvent.click(view.button('#api-key'))
     expect(view.document.activeElement).toBe(view.input)
@@ -149,10 +151,11 @@ describe('desktop welcome presentation', () => {
     expect(view.button('#save-key').disabled).toBe(true)
   })
 
-  it('keeps visible copy in the shell dictionaries and denies network access', () => {
+  it('keeps visible copy in shell dictionaries and permits only the configured image outside the shell', () => {
     expect([...html.matchAll(/>([^<]*\p{L}[^<]*)</gu)]).toEqual([])
     expect(html).toContain("default-src 'none'")
     expect(html).toContain("form-action 'none'")
+    expect(html).toContain(`img-src 'self' data: ${NOVA_BRANDING.logoUrl};`)
   })
 })
 

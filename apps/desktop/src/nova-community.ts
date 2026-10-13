@@ -9,6 +9,12 @@ export const NOVA_COMMUNITY_PACKAGE = '@linxin666/dsh-web-all'
 /** 私有 Nova 企业插件包；随桌面交付，不要求终端用户访问公网 npm。 */
 export const NOVA_ENTERPRISE_PACKAGE = '@deepseek-ai/dsh-nova-enterprise'
 
+/** 已审查的上下文洞察插件；发布制品同时应用内网余额请求禁用补丁。 */
+export const NOVA_CONTEXT_PACKAGE = 'dsh-context'
+
+/** 上下文插件精确版本；依赖升级必须重新验证官方 API 和离线补丁。 */
+export const NOVA_CONTEXT_VERSION = '0.69.1'
+
 /** Nova 包启动及界面挂载所需文件；发布准备阶段缺少任一项都必须拒绝继续。 */
 export const NOVA_ENTERPRISE_RUNTIME_FILES = [
   'lib/index.js', 'lib/index.js.map', 'lib/types/host/index.d.ts',
@@ -36,6 +42,7 @@ export const NOVA_COMMUNITY_PATCH_PACKAGES: readonly string[] = [
 export const NOVA_DESKTOP_BUNDLES: readonly string[] = [
   ...(PROFILE_TEMPLATES.web as ProfileTemplate).bundles,
   NOVA_COMMUNITY_PACKAGE,
+  NOVA_CONTEXT_PACKAGE,
   DESKTOP_HOST_PACKAGE,
 ]
 

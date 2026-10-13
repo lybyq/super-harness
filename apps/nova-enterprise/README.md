@@ -13,6 +13,8 @@ Open AI Hub to search, install, configure, and publish capabilities through resp
 
 Catalog publication requires no approval. Local download, configuration, compatibility, and activation checks remain separate from native tool permissions.
 
+Desktop branding uses the native sidebar mark/name and conversation hero slots at priority `-100`, supplied with readonly `window.novaBrand` from the desktop preload. Pending or failed intranet images show a bundled Nova fallback immediately. Without this desktop value, the plugin contributes no brand overrides; disposing the plugin restores the native occupants.
+
 ## Table of Contents
 
 - [Use this package](#use-this-package)
@@ -70,7 +72,7 @@ The Desktop Host patch reads `NOVA_HUB_API_URL`, `NOVA_HUB_AUTH_MODE` (default `
 
 ### Offline desktop themes
 
-The Desktop Host seeds six paired light/dark palettes into `$DSH_HOME/skins`: Obsidian, Deep Sea, Pine, Polar, Warm Paper and Mist. Open the community Skin Center to preview and apply them; official appearance settings select light, dark or system mode. Styles and SVG previews are generated locally from bundled data, without network requests, fonts, images or executable hooks. Existing same-ID entries and the active selection are never overwritten. Removing a supplied theme restores it at the next startup while seeding is enabled; disabling seeding does not remove existing files. Directory failures produce a startup warning without disabling the Hub. Actual desktop visual acceptance remains manual.
+The Desktop Host seeds six paired light/dark palettes into `$DSH_HOME/skins`: Obsidian, Deep Sea, Pine, Polar, Warm Paper and Mist. It also supplies Quiet Dunes, Distant Horizon and Architectural Arc with local SVG backgrounds. Open the community Skin Center to preview and apply them; official appearance settings select light, dark or system mode. Styles, previews and backgrounds come from bundled data, without network requests, fonts or executable hooks. Backgrounds decorate the conversation scrolling area while input and code surfaces retain their palette colors. Existing same-ID entries and the active selection are never overwritten. Removing a supplied theme restores it at the next startup while seeding is enabled; disabling seeding does not remove existing files. Directory failures produce a startup warning without disabling the Hub. Actual desktop visual acceptance remains manual.
 
 ### Configure capabilities in the desktop
 

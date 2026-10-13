@@ -4,6 +4,8 @@ English | [中文](README.zh.md)
 
 ## Summary
 
+Start with the [Desktop handbook](../docs/nova-desktop-handbook.md) for daily development, intranet transfer and role/team workflows.
+
 This directory contains Nova-owned enterprise integration code. The desktop application remains in the official [Electron application](../apps/desktop/README.md); the existing Nova Hub remains a separate service. [upstream.json](upstream.json) pins the official source baseline. Credentials and deployment-specific intranet addresses do not belong in this public repository.
 
 ## Hub transport

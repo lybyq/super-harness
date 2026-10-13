@@ -123,11 +123,11 @@ export function resourceDrafts(
       return this.list(workspace)
     },
   }
-  const tools = ctx.get('tools')
-  if (tools)
-    ctx.effect(
+  // 工具服务可能晚于企业插件就绪；按原生依赖生命周期挂载，不能只在启动瞬间检查一次。
+  ctx.inject(['tools'], (toolCtx) => {
+    toolCtx.effect(
       () =>
-        tools.register({
+        toolCtx.tools.register({
           name: 'harness_prepare_resource',
           description:
             '将用户请求创建的 skill、MCP 或 Host 插件文本保存为待检查草稿。不会执行代码或发布；用户在 AI Hub 的开发与发布中检查、配置目标并明确确认。不能包含密码或 Token。',
@@ -168,5 +168,6 @@ export function resourceDrafts(
         }),
       'harness resource draft tool',
     )
+  })
   return service
 }

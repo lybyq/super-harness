@@ -1,4 +1,4 @@
-/** 随企业桌面交付纯配色皮肤；复用社区皮肤中心，不下载资源或执行皮肤脚本。 */
+/** 随企业桌面交付配色与本地背景皮肤；复用社区皮肤中心，不下载资源或执行皮肤脚本。 */
 import { lstatSync, mkdirSync, mkdtempSync, renameSync, rmSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 
@@ -24,6 +24,7 @@ interface BuiltinTheme {
   tagline: string
   light: Palette
   dark: Palette
+  background?: 'dune' | 'horizon' | 'arc'
 }
 
 /**
@@ -35,7 +36,7 @@ function palette(...colors: [string, string, string, string, string, string, str
   return { base, surface, raised, sidebar, foreground, secondary, border, accent, accentHover, onAccent }
 }
 
-/** 六套随包色板，每套支持官方明暗切换，不修改当前皮肤选择。 */
+/** 六套纯配色及三套本地背景，每套支持官方明暗切换，不修改当前皮肤选择。 */
 export const BUILTIN_THEMES: readonly BuiltinTheme[] = [
   {
     id: 'harness-obsidian', name: '曜石', nameEn: 'Obsidian', tagline: '石墨灰 · 克制铜金 · 专注代码',
@@ -66,6 +67,21 @@ export const BUILTIN_THEMES: readonly BuiltinTheme[] = [
     id: 'harness-mist', name: '雾青', nameEn: 'Mist', tagline: '浅雾灰 · 青瓷绿 · 舒展界面',
     light: palette('#f0f6f5', '#fbfefe', '#e3eeec', '#e5efed', '#183a37', '#506b67', '#c5dad6', '#1d6a62', '#17554f', '#ffffff'),
     dark: palette('#172b2b', '#203838', '#2c4947', '#112323', '#e3f0ed', '#b0ccc5', '#426661', '#94d6c6', '#b0e7d9', '#14322c'),
+  },
+  {
+    id: 'harness-dune', name: '静沙', nameEn: 'Quiet Dunes', tagline: '暖米沙丘 · 留白地形 · 本地背景', background: 'dune',
+    light: palette('#f8f3e9', '#fffcf5', '#eee5d7', '#efe7d9', '#3e3125', '#75604c', '#d8c8b1', '#95502c', '#793f21', '#ffffff'),
+    dark: palette('#29231e', '#342c24', '#44372c', '#211c18', '#f4e8d5', '#cfb99a', '#62503e', '#e8b17c', '#f5c596', '#2b2117'),
+  },
+  {
+    id: 'harness-horizon', name: '远山', nameEn: 'Distant Horizon', tagline: '蓝灰远山 · 开阔层次 · 本地背景', background: 'horizon',
+    light: palette('#f0f5fa', '#ffffff', '#e5edf6', '#e8eff7', '#172c43', '#50657b', '#c9d7e6', '#245fa5', '#194c89', '#ffffff'),
+    dark: palette('#101b2c', '#17253a', '#20324a', '#0d1625', '#e0eaf7', '#a8bbd3', '#354b66', '#87bafa', '#a5ccff', '#102039'),
+  },
+  {
+    id: 'harness-arc', name: '弧境', nameEn: 'Architectural Arc', tagline: '石墨建筑曲线 · 极简秩序 · 本地背景', background: 'arc',
+    light: palette('#f4f3f0', '#ffffff', '#eae7e2', '#edeae5', '#24231f', '#625e55', '#d5d0c6', '#805b26', '#674719', '#ffffff'),
+    dark: palette('#17181b', '#1e2024', '#292c32', '#121316', '#ece9e1', '#b6b2a9', '#3e4148', '#dfb878', '#edc990', '#191a1d'),
   },
 ]
 
@@ -113,20 +129,47 @@ function tokens(p: Palette): Record<string, string> {
 
 /**
  * @param theme 随包主题。
- * @returns 交给皮肤中心作用域转换的 CSS，不含 URL、全局布局改写或动画。
+ * @returns 交给皮肤中心作用域转换的 CSS；背景仅引用同目录素材，不改布局或动画。
  */
 export function themeStyles(theme: BuiltinTheme): string {
   const rule = (selector: string, p: Palette) => `${selector} {\n${Object.entries(tokens(p)).map(([key, value]) => `  ${key}: ${value};`).join('\n')}\n}\n`
-  return rule(':root, body', theme.light) + rule('body[data-ds-dark-theme]', theme.dark)
+  const styles = rule(':root, body', theme.light) + rule('body[data-ds-dark-theme]', theme.dark)
+  if (!theme.background) return styles
+  return styles + `body, [data-conversation-scroll] {
+  background-image: url("assets/background-light.svg");
+  background-size: cover;
+  background-position: center;
+}
+body[data-ds-dark-theme], body[data-ds-dark-theme] [data-conversation-scroll] {
+  background-image: url("assets/background-dark.svg");
+}
+`
+}
+
+/** @param p 明暗配色。 @param shape 本地背景风格。 @returns 大幅留白的 SVG 图形，不含文字、脚本、字体或外部引用。 */
+function backgroundShapes(p: Palette, shape: NonNullable<BuiltinTheme['background']>): string {
+  if (shape === 'dune') return `<path d="M0 750Q430 440 980 800T1920 700V1200H0Z" fill="${p.border}" opacity=".22"/>
+<path d="M0 1050Q710 630 1290 950T1920 790V1200H0Z" fill="${p.accent}" opacity=".06"/>`
+  if (shape === 'horizon') return `<path d="M0 1030L320 840L530 920L990 620L1370 930L1650 760L1920 1010V1200H0Z" fill="${p.border}" opacity=".2"/>
+<path d="M0 1150L520 1030L1070 910L1440 1080L1920 940V1200H0Z" fill="${p.accent}" opacity=".06"/>`
+  return `<path d="M1350 1200V720A490 490 0 0 1 1840 230H1920" fill="none" stroke="${p.border}" stroke-width="180" opacity=".18"/>
+<path d="M1490 1200V730A355 355 0 0 1 1845 375H1920" fill="none" stroke="${p.accent}" stroke-width="2" opacity=".1"/>`
+}
+
+/** @param p 明暗配色。 @param shape 本地背景风格。 @returns 随皮肤目录交付的静态背景图片。 */
+function backgroundImage(p: Palette, shape: NonNullable<BuiltinTheme['background']>): string {
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1200" viewBox="0 0 1920 1200"><rect width="1920" height="1200" fill="${p.base}"/>${backgroundShapes(p, shape)}</svg>\n`
 }
 
 /**
  * @param p 单个明暗色板。
+ * @param shape 可选本地背景风格；纯配色预览不加装饰图形。
  * @returns 无文字、外链或脚本的本地 SVG 预览，展示侧栏、消息、代码和按钮。
  */
-function preview(p: Palette): string {
+function preview(p: Palette, shape?: BuiltinTheme['background']): string {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="400" viewBox="0 0 640 400">
 <rect width="640" height="400" rx="16" fill="${p.base}"/>
+${shape ? `<g transform="scale(.333333333)">${backgroundShapes(p, shape)}</g>` : ''}
 <path d="M16 0h144v400H16A16 16 0 0 1 0 384V16A16 16 0 0 1 16 0" fill="${p.sidebar}"/>
 <rect x="24" y="28" width="26" height="26" rx="8" fill="${p.accent}"/>
 <rect x="62" y="35" width="68" height="9" rx="4" fill="${p.foreground}"/>
@@ -163,11 +206,17 @@ export function seedBuiltinThemes(skinsDirectory: string): string[] {
     try {
       const manifest = { skinManifestVersion: 2, id: theme.id, name: theme.name, nameEn: theme.nameEn,
         author: 'Harness', version: '1.0.0', tagline: theme.tagline, accent: theme.light.accent,
-        order: order + 10, tags: ['harness', 'offline'],
+        order: order + 10, tags: ['harness', 'offline', ...(theme.background ? ['background'] : [])],
         preview: { light: 'light.svg', dark: 'dark.svg' }, contributes: { stylesheet: 'skin.css' } }
       for (const [name, content] of Object.entries({ 'skin.json': `${JSON.stringify(manifest, null, 2)}\n`,
-        'skin.css': themeStyles(theme), 'light.svg': preview(theme.light), 'dark.svg': preview(theme.dark) })) {
+        'skin.css': themeStyles(theme), 'light.svg': preview(theme.light, theme.background), 'dark.svg': preview(theme.dark, theme.background) })) {
         writeFileSync(join(staging, name), content, { flag: 'wx', mode: 0o600 })
+      }
+      if (theme.background) {
+        mkdirSync(join(staging, 'assets'))
+        for (const mode of ['light', 'dark'] as const) {
+          writeFileSync(join(staging, 'assets', `background-${mode}.svg`), backgroundImage(theme[mode], theme.background), { flag: 'wx', mode: 0o600 })
+        }
       }
       try { renameSync(staging, target) } catch (error) {
         if (error instanceof Error && 'code' in error && (error.code === 'EEXIST' || error.code === 'ENOTEMPTY')) continue

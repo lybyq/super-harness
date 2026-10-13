@@ -38,6 +38,14 @@ test('真实 Loader 组合挂载企业路由，关闭后完整撤销', async () 
   assert.equal(routes.size, 0)
 })
 
+test('工具服务晚于企业插件声明时仍注册草稿入口，关闭后不残留工具', async () => {
+  const ctx = await boot('harness-late-tools-test', fileURLToPath(new URL('./fixtures/cordis-late-tools.yml', import.meta.url)))
+  const tools = ctx.tools
+  try { assert.deepEqual(tools.schemas().map(item => item.name), ['harness_prepare_resource']) }
+  finally { await ctx.fiber.dispose() }
+  assert.deepEqual(tools.schemas(), [])
+})
+
 test('隔离 npm MCP、GitLab 嵌套 Skill、原生 Plugin 的配置、注册、停用、回滚、卸载', {
   skip: !process.env.HARNESS_TEST_HUB_URL, timeout: 60000,
 }, async () => {

@@ -4,6 +4,7 @@ import { spawn, type ChildProcess } from 'node:child_process'
 import { join } from 'node:path'
 import type { PlatformSession } from '@deepseek-ai/dsh-deepseek-account'
 import { desktopNodeEnvironment } from './node-environment.ts'
+import { DesktopHostWatchdog, type DesktopWatchdogConfig } from './host-watchdog.ts'
 
 interface ReadyEvent {
   readonly type: 'ready'
@@ -23,7 +24,12 @@ interface PlatformSessionEvent {
   readonly session: PlatformSession | null
 }
 
-type DesktopHostEvent = ReadyEvent | FatalEvent | PlatformSessionEvent | { readonly type: 'shutdown-complete' } | {
+type DesktopHostEvent = ReadyEvent | FatalEvent | PlatformSessionEvent | {
+  readonly type: 'turn-ended'
+  readonly sessionId: string
+  readonly turn: number
+  readonly completed: boolean
+} | { readonly type: 'health'; readonly requestId: number } | { readonly type: 'shutdown-complete' } | {
   readonly type: 'update-tasks'
   readonly requestId: number
   readonly active: boolean
@@ -56,6 +62,11 @@ function isDesktopHostEvent(message: unknown): message is DesktopHostEvent {
   switch (candidate.type) {
     case 'shutdown-complete':
       return true
+    case 'health':
+      return Number.isSafeInteger(candidate.requestId)
+    case 'turn-ended':
+      return typeof candidate.sessionId === 'string' && candidate.sessionId.length > 0
+        && Number.isSafeInteger(candidate.turn) && Number(candidate.turn) >= 0 && typeof candidate.completed === 'boolean'
     case 'ready':
       return typeof candidate.url === 'string'
     case 'platform-session': {
@@ -149,6 +160,7 @@ export class DesktopHostProcess {
   private stopping = false
   private shutdownCompleted = false
   private nextControlId = 1
+  private watchdog: DesktopHostWatchdog | undefined
   private readonly controlRequests = new Map<number, {
     resolve: (response: DesktopHostControlResponse) => void
     reject: (error: Error) => void
@@ -165,6 +177,7 @@ export class DesktopHostProcess {
    *   `office-skills` resources fail Host startup.
    * @param packageManager - Bundled pnpm entry and Node launcher directory, scoped to package operations.
    * @param onPlatformSession - Private credential updates for embedded Platform views.
+   * @param operations - 健康探测参数和仅含结果标记的回合通知。
    */
   constructor(
     private readonly node: string,
@@ -177,6 +190,8 @@ export class DesktopHostProcess {
     private readonly packageManager?: { readonly pnpm: string; readonly nodeBin: string },
 
     private readonly onPlatformSession?: (session: PlatformSession | null) => void,
+    private readonly operations?: { readonly watchdog?: DesktopWatchdogConfig | undefined
+      readonly onTurnEnded?: (completed: boolean) => void },
   ) {}
 
   /**
@@ -209,7 +224,22 @@ export class DesktopHostProcess {
         child.kill('SIGTERM')
         return
       }
-      if (message.type === 'ready') this.readyResolve({ url: message.url, injections: message.injections })
+      if (message.type === 'ready') {
+        this.readyResolve({ url: message.url, injections: message.injections })
+        if (this.operations?.watchdog !== undefined && this.watchdog === undefined) {
+          const config = this.operations.watchdog
+          this.watchdog = new DesktopHostWatchdog(config, async () => {
+            await this.control({ type: 'health' }, config.timeoutMs, 'desktop health: Host did not answer')
+          }, (error) => { this.fail(error) })
+          this.watchdog.start()
+        }
+      }
+      else if (message.type === 'turn-ended') {
+        if (!this.stopping && !this.failureReported) {
+          try { this.operations?.onTurnEnded?.(message.completed) }
+          catch (error) { console.warn('desktop turn: listener failed', error) }
+        }
+      }
       else if (message.type === 'platform-session') this.onPlatformSession?.(message.session)
       else if (message.type === 'shutdown-complete') {
         if (this.stopping) this.shutdownCompleted = true
@@ -218,8 +248,9 @@ export class DesktopHostProcess {
       else if (message.type === 'fatal') this.fail(new DesktopHostFatalError(message.message, message.diagnostic))
       else {
         const request = this.controlRequests.get(message.requestId)
-        if (message.error === undefined) request?.resolve(message)
-        else request?.reject(new Error(message.error))
+        const error = message.type === 'health' ? undefined : message.error
+        if (error === undefined) request?.resolve(message)
+        else request?.reject(new Error(error))
       }
     })
     child.once('error', (error) => { this.fail(error) })
@@ -258,7 +289,8 @@ export class DesktopHostProcess {
   }
 
   private async control(
-    request: { readonly type: 'update-tasks'; readonly action: 'inspect' | 'lock' | 'unlock' } | { readonly type: 'quit-inspection' },
+    request: { readonly type: 'update-tasks'; readonly action: 'inspect' | 'lock' | 'unlock' }
+      | { readonly type: 'quit-inspection' } | { readonly type: 'health' },
     deadlineMs: number, deadlineMessage: string,
   ): Promise<DesktopHostControlResponse> {
     const child = this.child
@@ -289,6 +321,10 @@ export class DesktopHostProcess {
     const child = this.child
     if (child === undefined) return
     this.stopping = true
+    this.watchdog?.stop()
+    for (const request of this.controlRequests.values()) request.reject(new Error('desktop host: stopping'))
+    this.controlRequests.clear()
+    await this.watchdog?.settled()
     this.onPlatformSession?.(null)
     if (child.connected) child.send({ type: 'shutdown' }, (error) => { if (error !== null) this.fail(error) })
     const exited = this.exitPromise ?? Promise.resolve()
@@ -308,6 +344,7 @@ export class DesktopHostProcess {
   }
 
   private fail(error: Error): void {
+    this.watchdog?.stop()
     this.onPlatformSession?.(null)
     this.readyReject(error)
     for (const request of this.controlRequests.values()) request.reject(error)

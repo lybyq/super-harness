@@ -1,5 +1,8 @@
 [
   {
+    "label": "导出诊断 ZIP…"
+  },
+  {
     "label": "检查更新…"
   },
   {
@@ -7,7 +10,7 @@
   },
   {
     "role": "hide",
-    "label": "隐藏 DeepSeek Harness"
+    "label": "隐藏 Nova"
   },
   {
     "role": "hideOthers",
@@ -19,6 +22,6 @@
   },
   {
     "role": "quit",
-    "label": "退出 DeepSeek Harness"
+    "label": "退出 Nova"
   }
 ]

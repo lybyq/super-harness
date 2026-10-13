@@ -1,0 +1,11 @@
+# 工具服务刻意最后声明，验证企业草稿工具依赖真实服务就绪后再挂载。
+- id: system-prompt
+  name: ../../../../packages/core/system-prompt/lib/index.js
+- id: skills
+  name: ../../../../packages/skill/skill/lib/index.js
+- id: test-host
+  name: ./host.mjs
+- id: enterprise
+  name: ../../src/index.ts
+- id: tools
+  name: ../../../../packages/core/tools/lib/index.js

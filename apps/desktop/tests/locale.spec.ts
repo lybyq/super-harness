@@ -2,6 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { en, formatDesktopMessage, resolveDesktopLocale, resolveDesktopStartupLocale, zh } from '../src/locale.ts'
 
 describe('desktop locale dictionaries', () => {
+  it.each([en, zh])('brands the desktop Nova without renaming the model provider', (messages) => {
+    expect(messages.aboutProduct).toBe('Nova')
+    expect(messages.welcomeBrand).toBe('Nova')
+    expect(Object.values(messages).join('\n')).not.toContain('DeepSeek Harness')
+    expect(messages.welcomeKeyDescription).toContain('DeepSeek')
+  })
   it('ships the same key set in English and Chinese', () => {
     expect(Object.keys(zh)).toEqual(Object.keys(en))
     expect(resolveDesktopLocale('zh-Hans-CN').messages).toEqual(zh)

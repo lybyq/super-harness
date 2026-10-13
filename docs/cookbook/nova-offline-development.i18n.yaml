@@ -1,0 +1,43 @@
+# Bilingual-pair consistency record for nova-offline-development.md (docs/i18n/README.md): per heading
+# section, a hash of its English and Chinese blocks outside code blocks and generated regions.
+# After editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write docs/cookbook/nova-offline-development.md
+/:
+  en: d7ca764b73d20365
+  zh: f688769e6352c65c
+/harness-intranet-offline-development-and-desktop-delivery:
+  en: 028742e9feb6b8e9
+  zh: b8b23f1f471401d7
+/harness-intranet-offline-development-and-desktop-delivery/intended-outcome:
+  en: f4105c1895975a88
+  zh: 78ad669eb511dc90
+/harness-intranet-offline-development-and-desktop-delivery/understand-the-materials-first:
+  en: 828bc4ca946daeb1
+  zh: 91551e1f2173acf9
+/harness-intranet-offline-development-and-desktop-delivery/1-prepare-outside-the-intranet:
+  en: 0731b49d946a1ffa
+  zh: f24f52b4d7248946
+/harness-intranet-offline-development-and-desktop-delivery/2-materials-to-transfer:
+  en: 0f26c59fa74b83d5
+  zh: 392699b6b38bf0fa
+/harness-intranet-offline-development-and-desktop-delivery/2a-mirror-dependencies-into-the-private-npm-registry:
+  en: c3b6f8ba3afebe32
+  zh: 791a9420a64dbb44
+/harness-intranet-offline-development-and-desktop-delivery/3-archive-with-7z:
+  en: e2b7a2c6b7ca6d61
+  zh: 51cb5a50b0f543dc
+/harness-intranet-offline-development-and-desktop-delivery/4-install-and-start-offline-inside:
+  en: 4890c3ce79d45ff8
+  zh: c901965d1c38a858
+/harness-intranet-offline-development-and-desktop-delivery/4-install-and-start-offline-inside/example-for-local-two-repository-integration:
+  en: 54b66e8c073b632b
+  zh: 3849c54e789fe1db
+/harness-intranet-offline-development-and-desktop-delivery/5-daily-development:
+  en: 81a927f599d4604b
+  zh: 249c4f5db4960e73
+/harness-intranet-offline-development-and-desktop-delivery/6-deliver-an-installer-to-employees:
+  en: bc7e542b9f9efac6
+  zh: 57b96316d576594a
+/harness-intranet-offline-development-and-desktop-delivery/dev-note:
+  en: 9904ef0da1b3a31a
+  zh: 470ab9ae388a8c67

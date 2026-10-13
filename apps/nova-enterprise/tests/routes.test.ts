@@ -46,6 +46,8 @@ async function fixture(t, documents = {}, deployment = {}) {
   process.env[tokenEnvironmentVariable] = 'fixture-hub-secret'
   t.after(() => { Reflect.deleteProperty(process.env, tokenEnvironmentVariable) })
   apply({
+    // 本路由替身不提供 tools，依赖保持未满足；真实挂载／晚加载由 composition 测试覆盖。
+    inject: () => undefined,
     on: () => () => {},
     get: () => undefined,
     credentials, logger: { warn: (...args) => { logs.push(args) } },

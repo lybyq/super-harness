@@ -8,8 +8,8 @@ export interface DesktopPolicyEnvironment {
 }
 
 /**
- * Resolve policy settings before artifact preparation or signing.
- * @param environment File-owned release settings; only the selected origin is required.
- * @returns Policy metadata with deployment-selected origin and authentication.
+ * 解析强更配置；明确指定的未签名离线测试包无需更新服务地址。
+ * @param environment 打包环境；OFFLINE_TEST=true 只在 UNSIGNED=1 时接受。
+ * @returns 已校验的部署策略；离线测试包返回 undefined，其他非法配置抛出异常。
  */
-export function resolveDesktopPolicyEnvironment(environment: NodeJS.ProcessEnv): DesktopPolicyEnvironment
+export function resolveDesktopPolicyEnvironment(environment: NodeJS.ProcessEnv): DesktopPolicyEnvironment | undefined

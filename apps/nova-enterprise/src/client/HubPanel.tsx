@@ -16,6 +16,7 @@ import {
 } from './api.ts'
 import { RoleWorkspace } from './RoleWorkspace.tsx'
 import { AuthoringPanel } from './AuthoringPanel.tsx'
+import { HubIcon } from './HubIcon.tsx'
 import { zh, type HubLocaleKey } from './locales.ts'
 import css from './HubPanel.module.css'
 
@@ -205,6 +206,7 @@ export function HubPanel({ t }: PanelProps): ReactNode {
           <button
             className={css.primary}
             disabled={busy || !item.hasRuntimeBinding}
+            title={!item.hasRuntimeBinding ? t('missingBinding') : undefined}
             onClick={() => {
               void run(signal => mutate('add', item, signal))
             }}
@@ -361,7 +363,7 @@ export function HubPanel({ t }: PanelProps): ReactNode {
   }
   return (
     <section className={css.panel} aria-label={t('panel')} aria-busy={busy}>
-      <header className={css.header}>
+      <header className={`${css.header} ${selected ? css.headerCompact : ''}`}>
         <div>
           <span className={css.eyebrow}>{t('panel')}</span>
           <h1>{t('title')}</h1>
@@ -414,11 +416,11 @@ export function HubPanel({ t }: PanelProps): ReactNode {
         </p>
       )}
       {busy && (
-        <p className={css.muted} role="status">
+        <p className={css.progress} role="status">
           {t('working')}
         </p>
       )}
-      <nav className={css.actions} aria-label={t('panel')}>
+      <nav className={`${css.actions} ${css.tabs}`} aria-label={t('panel')}>
         <button
           disabled={busy}
           aria-pressed={mode === 'capabilities'}
@@ -428,7 +430,7 @@ export function HubPanel({ t }: PanelProps): ReactNode {
             void run(signal => search(1, signal, 'capabilities'))
           }}
         >
-          {t('catalogTab')}
+          <HubIcon kind="catalog" />{t('catalogTab')}
         </button>
         <button
           disabled={busy}
@@ -438,7 +440,7 @@ export function HubPanel({ t }: PanelProps): ReactNode {
             setMode('roles')
           }}
         >
-          {t('rolesTab')}
+          <HubIcon kind="roles" />{t('rolesTab')}
         </button>
         <button
           disabled={busy}
@@ -458,7 +460,7 @@ export function HubPanel({ t }: PanelProps): ReactNode {
             })
           }}
         >
-          {t('installedTab')}
+          <HubIcon kind="installed" />{t('installedTab')}
         </button>
         <button
           disabled={busy}
@@ -468,290 +470,309 @@ export function HubPanel({ t }: PanelProps): ReactNode {
             setMode('authoring')
           }}
         >
-          {t('authoringTab')}
+          <HubIcon kind="authoring" />{t('authoringTab')}
         </button>
       </nav>
-      {mode === 'authoring' ? (
-        <AuthoringPanel
-          key={workspace}
-          workspace={workspace}
-          t={t}
-          busy={busy}
-          run={run}
-          notify={setNotice}
-          onDirty={setAuthoringDirty}
-        />
-      ) : mode === 'roles' ? (
-        <RoleWorkspace
-          key={workspace}
-          workspace={workspace}
-          t={t}
-          busy={busy}
-          configured={configured}
-          run={run}
-          notify={setNotice}
-        />
-      ) : selected ? (
-        <section className={css.detail}>
-          <button
-            disabled={busy}
-            onClick={() => {
-              leaveCapability()
-            }}
-          >
-            {t('close')}
-          </button>
-          <h2>{selected.capability.name}</h2>
-          <p className={css.muted}>
-            {selected.capability.id} · {selected.capability.version}
-          </p>
-          <p>{selected.capability.description}</p>
-          <div className={css.detailToolbar}>
-            <span className={css.badge}>{status(selected.capability)}</span>
-            <label>
-              {t('version')}{' '}
-              <select
-                value={selectedVersion}
-                disabled={busy}
-                onChange={(event) => {
-                  setSelectedVersion(event.target.value)
-                }}
-              >
-                {(selected.versions.length
-                  ? selected.versions
-                  : [{ version: selected.capability.version, hasRuntimeBinding: selected.capability.hasRuntimeBinding }]
-                ).map(item => (
-                  <option key={item.version} disabled={!item.hasRuntimeBinding} value={item.version}>
-                    {item.version}
-                  </option>
-                ))}
-              </select>
-            </label>
-            {capabilityActions(selected.capability)}
-          </div>
-          <nav className={css.actions} aria-label={t('detailTabs')}>
+      <div className={css.content} key={`${mode}:${selected?.capability.id ?? 'list'}`}>
+        {mode === 'authoring' ? (
+          <AuthoringPanel
+            key={workspace}
+            workspace={workspace}
+            t={t}
+            busy={busy}
+            run={run}
+            notify={setNotice}
+            onDirty={setAuthoringDirty}
+          />
+        ) : mode === 'roles' ? (
+          <RoleWorkspace
+            key={workspace}
+            workspace={workspace}
+            t={t}
+            busy={busy}
+            configured={configured}
+            run={run}
+            notify={setNotice}
+          />
+        ) : selected ? (
+          <section className={css.detail}>
             <button
-              aria-pressed={detailTab === 'readme'}
-              onClick={() => {
-                setDetailTab('readme')
-              }}
-            >
-              {t('readmeTab')}
-            </button>
-            <button
-              aria-pressed={detailTab === 'configuration'}
-              onClick={() => {
-                setDetailTab('configuration')
-              }}
-            >
-              {t('configure')} · {selected.fields.length}
-            </button>
-          </nav>
-          {detailTab === 'readme' ? (
-            <pre className={css.readme}>{documentation || t('readmeEmpty')}</pre>
-          ) : (
-            <>
-              <p className={css.muted}>{t('credentialsNotice')}</p>
-              {selected.fields.length === 0 && <p className={css.notice}>{t('noConfiguration')}</p>}
-              <form
-                className={css.configForm}
-                onSubmit={(event) => {
-                  event.preventDefault()
-                  void run(async (signal) => {
-                    const submittedValues = { ...values }
-                    for (const field of selected.fields.filter(field => field.schema.type === 'array')) {
-                      let parsed: unknown
-                      try {
-                        parsed = JSON.parse(arrayDrafts[field.key] ?? JSON.stringify(values[field.key] ?? []))
-                      } catch {
-                        throw new HubUiError('HUB_CONFIGURATION_INVALID')
-                      }
-                      if (!Array.isArray(parsed) || parsed.some(value => typeof value !== 'string'))
-                        throw new HubUiError('HUB_CONFIGURATION_INVALID')
-                      submittedValues[field.key] = parsed as string[]
-                    }
-                    const submittedSecrets = Object.fromEntries(
-                      Object.entries(secrets).filter(([, value]) => value !== ''),
-                    )
-                    const saved = form(
-                      await invoke('configuration', signal, {
-                        id: selected.capability.id,
-                        values: submittedValues,
-                        secrets: submittedSecrets,
-                      }),
-                    )
-                    if (signal.aborted) return
-                    setSelected(saved)
-                    setValues(saved.values)
-                    setSecrets({})
-                    setArrayDrafts({})
-                    setNotice('configurationSaved')
-                  })
-                }}
-              >
-                <div className={css.configGrid}>
-                  {selected.fields.map(field => (
-                    <div key={field.key} className={css.field}>
-                      <label htmlFor={`${prefix}-${field.key}`}>
-                        <span>
-                          {field.key}{' '}
-                          <small className={field.required ? css.required : css.muted}>
-                            {t(field.required ? 'required' : 'optional')}
-                          </small>{' '}
-                          <small className={css.muted}>{field.secret ? t('secretField') : field.schema.type}</small>
-                        </span>
-                        {fieldInput(field)}
-                        <small id={`${prefix}-${field.key}-hint`} className={css.muted}>
-                          {field.description || t('fieldNoDescription')}
-                        </small>
-                      </label>
-                      {field.secret && selected.configuredSecrets.includes(field.key) && (
-                        <button
-                          type="button"
-                          className={css.danger}
-                          disabled={busy}
-                          onClick={() => {
-                            if (!window.confirm(t('clearSecretConfirm'))) return
-                            void run(async (signal) => {
-                              await invoke('clear-secret', signal, { id: selected.capability.id, key: field.key })
-                              const result = form(
-                                await invoke(`configuration?id=${encodeURIComponent(selected.capability.id)}`, signal),
-                              )
-                              if (!signal.aborted) {
-                                setSelected(result)
-                                setSecrets({})
-                                setNotice('secretCleared')
-                              }
-                            })
-                          }}
-                        >
-                          {t('clearSecret')}
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-                <button type="submit" disabled={busy}>
-                  {t('saveConfiguration')}
-                </button>
-              </form>
-              {selected.configurationSaved && <p className={css.muted}>{t('configurationSaved')}</p>}
-            </>
-          )}
-        </section>
-      ) : (
-        <>
-          <form
-            className={css.search}
-            onSubmit={(event) => {
-              event.preventDefault()
-              void run(signal => search(1, signal))
-            }}
-          >
-            <input
-              aria-label={t('query')}
-              placeholder={t('query')}
-              value={query}
               disabled={busy}
-              onChange={(event) => {
-                setQuery(event.target.value)
-              }}
-            />
-            <select
-              aria-label={t('all')}
-              value={type}
-              disabled={busy}
-              onChange={(event) => {
-                setType(event.target.value)
+              onClick={() => {
+                leaveCapability()
               }}
             >
-              <option value="">{t('all')}</option>
-              {['mcp', 'skill', 'plugin', 'agent', 'hook', 'policy', 'pack'].map(kind => (
-                <option key={kind}>{kind}</option>
-              ))}
-            </select>
-            <button type="submit" disabled={busy || !configured}>
-              {t('search')}
+              {t('close')}
             </button>
-          </form>
-          {rows === null ? (
-            <p className={css.empty}>{t('unsearched')}</p>
-          ) : (
-            <>
-              <p className={css.muted}>
-                {t('total')}: {total}
-              </p>
-              {rows.length === 0 && <p className={css.empty}>{t('empty')}</p>}
-              <div className={css.results}>
-                {rows.map(item => (
-                  <article className={css.row} key={item.id}>
-                    <div>
-                      <div className={css.name}>
-                        <h2>{item.name}</h2>
-                        <span className={css.badge}>{item.type}</span>
-                      </div>
-                      <p>{item.description}</p>
-                      <p className={css.meta}>
-                        {item.id} · {t('source')}: {item.source} · {t('version')}: {item.version}
-                      </p>
-                      <p className={css.muted}>
-                        {t(item.hasRuntimeBinding ? 'readyBinding' : 'missingBinding')} · {status(item)}
-                      </p>
-                    </div>
-                    <div className={css.cardBottom}>
-                      <button
-                        disabled={busy}
-                        onClick={() => {
-                          void run(signal => openCapability(item, signal))
-                        }}
-                      >
-                        {t('details')}
-                      </button>
-                      {capabilityActions(item)}
-                    </div>
-                  </article>
-                ))}
+            <div className={css.detailHeader}>
+              <span className={css.resourceIcon}><HubIcon kind={selected.capability.type} size={24} /></span>
+              <div>
+                <h2>{selected.capability.name}</h2>
+                <p className={css.meta}>{selected.capability.id} · {selected.capability.version}</p>
               </div>
-              {mode !== 'installed' && (
-                <nav className={css.pagination} aria-label={t('search')}>
-                  <button
-                    disabled={busy || page <= 1}
-                    onClick={() => {
-                      void run(signal => search(page - 1, signal))
-                    }}
-                  >
-                    {t('previous')}
-                  </button>
-                  <span>{page}</span>
-                  <button
-                    disabled={busy || page * 20 >= total}
-                    onClick={() => {
-                      void run(signal => search(page + 1, signal))
-                    }}
-                  >
-                    {t('next')}
-                  </button>
-                </nav>
-              )}
-              {mode === 'installed' && (
-                <button
+            </div>
+            <p>{selected.capability.description}</p>
+            <div className={css.detailToolbar}>
+              <span className={css.status} data-state={selected.capability.activation}>{status(selected.capability)}</span>
+              <label>
+                {t('version')}{' '}
+                <select
+                  value={selectedVersion}
                   disabled={busy}
-                  onClick={() => {
-                    if (!window.confirm(t('rollbackConfirm'))) return
+                  onChange={(event) => {
+                    setSelectedVersion(event.target.value)
+                  }}
+                >
+                  {(selected.versions.length
+                    ? selected.versions
+                    : [{ version: selected.capability.version, hasRuntimeBinding: selected.capability.hasRuntimeBinding }]
+                  ).map(item => (
+                    <option key={item.version} disabled={!item.hasRuntimeBinding} value={item.version}>
+                      {item.version}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              {capabilityActions(selected.capability)}
+            </div>
+            <nav className={`${css.actions} ${css.tabs}`} aria-label={t('detailTabs')}>
+              <button
+                aria-pressed={detailTab === 'readme'}
+                onClick={() => {
+                  setDetailTab('readme')
+                }}
+              >
+                {t('readmeTab')}
+              </button>
+              <button
+                aria-pressed={detailTab === 'configuration'}
+                onClick={() => {
+                  setDetailTab('configuration')
+                }}
+              >
+                {t('configure')} · {selected.fields.length}
+              </button>
+            </nav>
+            {detailTab === 'readme' ? (
+              <pre className={css.readme}>{documentation || t('readmeEmpty')}</pre>
+            ) : (
+              <>
+                <p className={css.muted}>{t('credentialsNotice')}</p>
+                {selected.fields.length === 0 && <p className={css.notice}>{t('noConfiguration')}</p>}
+                <form
+                  className={css.configForm}
+                  onSubmit={(event) => {
+                    event.preventDefault()
                     void run(async (signal) => {
-                      await invoke('lifecycle', signal, { action: 'rollback' })
-                      await search(1, signal)
-                      setNotice('operationCompleted')
+                      const submittedValues = { ...values }
+                      for (const field of selected.fields.filter(field => field.schema.type === 'array')) {
+                        let parsed: unknown
+                        try {
+                          parsed = JSON.parse(arrayDrafts[field.key] ?? JSON.stringify(values[field.key] ?? []))
+                        } catch {
+                          throw new HubUiError('HUB_CONFIGURATION_INVALID')
+                        }
+                        if (!Array.isArray(parsed) || parsed.some(value => typeof value !== 'string'))
+                          throw new HubUiError('HUB_CONFIGURATION_INVALID')
+                        submittedValues[field.key] = parsed as string[]
+                      }
+                      const submittedSecrets = Object.fromEntries(
+                        Object.entries(secrets).filter(([, value]) => value !== ''),
+                      )
+                      const saved = form(
+                        await invoke('configuration', signal, {
+                          id: selected.capability.id,
+                          values: submittedValues,
+                          secrets: submittedSecrets,
+                        }),
+                      )
+                      if (signal.aborted) return
+                      setSelected(saved)
+                      setValues(saved.values)
+                      setSecrets({})
+                      setArrayDrafts({})
+                      setNotice('configurationSaved')
                     })
                   }}
                 >
-                  {t('rollback')}
-                </button>
-              )}
-            </>
-          )}
-        </>
-      )}
+                  {([false, true] as const).filter(secret => selected.fields.some(field => field.secret === secret)).map(secret => (
+                    <fieldset key={String(secret)} className={css.configSection}>
+                      <legend>{t(secret ? 'secretParameters' : 'publicParameters')}</legend>
+                      <p className={css.muted}>{t(secret ? 'secretParametersHint' : 'publicParametersHint')}</p>
+                      <div className={css.configGrid}>
+                        {selected.fields.filter(field => field.secret === secret).map(field => (
+                          <div key={field.key} className={`${css.field} ${field.schema.type === 'array' || /_(?:JSON|TOML)$/.test(field.key) ? css.fieldWide : ''}`}>
+                            <label htmlFor={`${prefix}-${field.key}`}>
+                              <span>
+                                {field.key}{' '}
+                                <small className={field.required ? css.required : css.muted}>
+                                  {t(field.required ? 'required' : 'optional')}
+                                </small>{' '}
+                                <small className={css.muted}>{field.secret ? t('secretField') : field.schema.type}</small>
+                              </span>
+                              {fieldInput(field)}
+                              <small id={`${prefix}-${field.key}-hint`} className={css.muted}>
+                                {field.description || t('fieldNoDescription')}
+                              </small>
+                            </label>
+                            {field.secret && selected.configuredSecrets.includes(field.key) && (
+                              <button
+                                type="button"
+                                className={css.danger}
+                                disabled={busy}
+                                onClick={() => {
+                                  if (!window.confirm(t('clearSecretConfirm'))) return
+                                  void run(async (signal) => {
+                                    await invoke('clear-secret', signal, { id: selected.capability.id, key: field.key })
+                                    const result = form(
+                                      await invoke(`configuration?id=${encodeURIComponent(selected.capability.id)}`, signal),
+                                    )
+                                    if (!signal.aborted) {
+                                      setSelected(result)
+                                      setSecrets({})
+                                      setNotice('secretCleared')
+                                    }
+                                  })
+                                }}
+                              >
+                                {t('clearSecret')}
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </fieldset>
+                  ))}
+                  <div className={css.formActions}>
+                    <button type="submit" className={css.primary} disabled={busy}>
+                      {t('saveConfiguration')}
+                    </button>
+                  </div>
+                </form>
+                {selected.configurationSaved && <p className={css.muted}>{t('configurationSaved')}</p>}
+              </>
+            )}
+          </section>
+        ) : (
+          <>
+            <form
+              className={css.search}
+              onSubmit={(event) => {
+                event.preventDefault()
+                void run(signal => search(1, signal))
+              }}
+            >
+              <div className={css.searchInput}>
+                <HubIcon kind="search" />
+                <input
+                  aria-label={t('query')}
+                  placeholder={t('query')}
+                  value={query}
+                  disabled={busy}
+                  onChange={(event) => {
+                    setQuery(event.target.value)
+                  }}
+                />
+              </div>
+              <select
+                aria-label={t('all')}
+                value={type}
+                disabled={busy}
+                onChange={(event) => {
+                  setType(event.target.value)
+                }}
+              >
+                <option value="">{t('all')}</option>
+                {['mcp', 'skill', 'plugin', 'agent', 'hook', 'policy', 'pack'].map(kind => (
+                  <option key={kind}>{kind}</option>
+                ))}
+              </select>
+              <button type="submit" className={css.primary} disabled={busy || !configured}>
+                {t('search')}
+              </button>
+            </form>
+            {rows === null ? (
+              <p className={css.empty}>{t('unsearched')}</p>
+            ) : (
+              <>
+                <p className={css.muted}>
+                  {t('total')}: {total}
+                </p>
+                {rows.length === 0 && <p className={css.empty}>{t('empty')}</p>}
+                <div className={css.results}>
+                  {rows.map(item => (
+                    <article className={css.row} key={item.id}>
+                      <div>
+                        <div className={css.name}>
+                          <span className={css.resourceIcon}><HubIcon kind={item.type} size={21} /></span>
+                          <h2>{item.name}</h2>
+                          <span className={css.badge}>{item.type}</span>
+                        </div>
+                        <p>{item.description}</p>
+                        <p className={css.meta}>
+                          {item.id} · {t('source')}: {item.source} · {t('version')}: {item.version}
+                        </p>
+                        <p>
+                          <span className={css.status} data-state={!item.hasRuntimeBinding ? 'unsupported' : item.activation}>
+                            {item.hasRuntimeBinding ? status(item) : t('missingBinding')}
+                          </span>
+                        </p>
+                      </div>
+                      <div className={css.cardBottom}>
+                        <button
+                          disabled={busy}
+                          onClick={() => {
+                            void run(signal => openCapability(item, signal))
+                          }}
+                        >
+                          {t('details')}
+                        </button>
+                        {capabilityActions(item)}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+                {mode !== 'installed' && (
+                  <nav className={css.pagination} aria-label={t('search')}>
+                    <button
+                      disabled={busy || page <= 1}
+                      onClick={() => {
+                        void run(signal => search(page - 1, signal))
+                      }}
+                    >
+                      {t('previous')}
+                    </button>
+                    <span>{page}</span>
+                    <button
+                      disabled={busy || page * 20 >= total}
+                      onClick={() => {
+                        void run(signal => search(page + 1, signal))
+                      }}
+                    >
+                      {t('next')}
+                    </button>
+                  </nav>
+                )}
+                {mode === 'installed' && (
+                  <button
+                    disabled={busy}
+                    onClick={() => {
+                      if (!window.confirm(t('rollbackConfirm'))) return
+                      void run(async (signal) => {
+                        await invoke('lifecycle', signal, { action: 'rollback' })
+                        await search(1, signal)
+                        setNotice('operationCompleted')
+                      })
+                    }}
+                  >
+                    {t('rollback')}
+                  </button>
+                )}
+              </>
+            )}
+          </>
+        )}
+      </div>
       <footer className={css.footer}>{t('installationNotice')}</footer>
     </section>
   )

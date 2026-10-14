@@ -1,5 +1,12 @@
 /** AI Hub 面板自有双语文案；错误只展示稳定码对应的说明，不展示可能含密钥的异常。 */
 export const zh = {
+  publicParameters: '连接与运行参数',
+  publicParametersHint: '填写此能力需要的地址和运行选项；参数按当前安装范围保存。',
+  secretParameters: '账号凭据',
+  secretParametersHint: '密钥不回显。已配置的字段留空保留原值，清除操作需要确认。',
+  roleModeHint: '一个 Agent，组合岗位职责与能力。',
+  teamModeHint: '多个独立 Agent，按任务分工协作。',
+  teamReview: '团队运行与成果审阅',
   customCapabilities: '自由组合能力',
   customCapabilitiesHint:
     '填写 Hub 卡片中的准确能力 ID，多个用英文逗号隔开。只修改此模板，账号配置仍在能力详情。组合由 Hub 权威解析，不能绕过强制拒绝。',
@@ -238,6 +245,13 @@ export const zh = {
 } as const
 
 export const en: Record<keyof typeof zh, string> = {
+  publicParameters: 'Connection and runtime',
+  publicParametersHint: 'Set this capability’s endpoints and runtime options. Values belong to the selected installation scope.',
+  secretParameters: 'Credentials',
+  secretParametersHint: 'Saved secrets are never displayed. Leave a configured field blank to keep it; clearing requires confirmation.',
+  roleModeHint: 'One agent with combined responsibilities and capabilities.',
+  teamModeHint: 'Independent agents working on assigned tasks.',
+  teamReview: 'Team activity and output review',
   customCapabilities: 'Compose capabilities',
   customCapabilitiesHint:
     'Use exact capability IDs from Hub cards, separated by commas. Only this template changes; accounts stay in capability details. Hub resolves the composition without bypassing enforced denials.',

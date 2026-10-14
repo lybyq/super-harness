@@ -41,7 +41,7 @@ export function RolePanel({
         <button disabled={busy || !configured} onClick={onLoad}>
           {t('loadRoles')}
         </button>
-        <button disabled={busy || selected.length === 0} onClick={onResolve}>
+        <button className={css.primary} disabled={busy || selected.length === 0} onClick={onResolve}>
           {t('resolveRoles')}
         </button>
       </div>
@@ -50,7 +50,7 @@ export function RolePanel({
       ) : roles.length === 0 ? (
         <p className={css.empty}>{t('rolesEmpty')}</p>
       ) : (
-        <div className={css.results}>
+        <div className={css.roleList}>
           {roles.map(role => (
             <label className={css.roleRow} key={role.id}>
               <input
@@ -74,7 +74,7 @@ export function RolePanel({
         </div>
       )}
       {plan && (
-        <section className={css.detail} aria-label={t('rolePlanTitle')}>
+        <section className={css.plan} aria-label={t('rolePlanTitle')}>
           <h2>{t('rolePlanTitle')}</h2>
           <p>
             {plan.role.name} · {plan.role.version}

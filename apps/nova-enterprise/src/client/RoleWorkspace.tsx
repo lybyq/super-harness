@@ -186,46 +186,47 @@ export function RoleWorkspace({ t, busy, configured, run, notify, workspace = ''
             })
           }}
         >
-          <label htmlFor={`${prefix}-id`}>
-            {t('templateId')}
-            <input
-              id={`${prefix}-id`}
-              required
-              pattern="[a-z0-9][a-z0-9._-]{0,127}"
-              disabled={busy || Boolean(templateId)}
-              value={id}
-              onChange={(event) => {
-                setId(event.target.value)
-              }}
-            />
-          </label>
-          <label htmlFor={`${prefix}-name`}>
-            {t('templateName')}
-            <input
-              id={`${prefix}-name`}
-              required
-              maxLength={128}
-              disabled={busy}
-              value={name}
-              onChange={(event) => {
-                setName(event.target.value)
-              }}
-            />
-          </label>
-          <label htmlFor={`${prefix}-kind`}>
-            {t('templateKind')}
-            <select
-              id={`${prefix}-kind`}
-              disabled={busy}
-              value={kind}
-              onChange={(event) => {
-                setKind(event.target.value === 'team' ? 'team' : 'role')
-              }}
-            >
-              <option value="role">{t('roleKind')}</option>
-              <option value="team">{t('teamKind')}</option>
-            </select>
-          </label>
+          <div className={css.configGrid}>
+            <label htmlFor={`${prefix}-id`}>
+              {t('templateId')}
+              <input
+                id={`${prefix}-id`}
+                required
+                pattern="[a-z0-9][a-z0-9._-]{0,127}"
+                disabled={busy || Boolean(templateId)}
+                value={id}
+                onChange={(event) => {
+                  setId(event.target.value)
+                }}
+              />
+            </label>
+            <label htmlFor={`${prefix}-name`}>
+              {t('templateName')}
+              <input
+                id={`${prefix}-name`}
+                required
+                maxLength={128}
+                disabled={busy}
+                value={name}
+                onChange={(event) => {
+                  setName(event.target.value)
+                }}
+              />
+            </label>
+          </div>
+          <fieldset disabled={busy}>
+            <legend>{t('templateKind')}</legend>
+            <div className={css.modeChoices}>
+              {(['role', 'team'] as const).map(mode => (
+                <label key={mode}>
+                  <input type="radio" name={`${prefix}-kind`} value={mode} checked={kind === mode}
+                    onChange={() => { setKind(mode) }} />
+                  <span>{t(mode === 'team' ? 'teamKind' : 'roleKind')}</span>
+                  <small>{t(mode === 'team' ? 'teamModeHint' : 'roleModeHint')}</small>
+                </label>
+              ))}
+            </div>
+          </fieldset>
           <label htmlFor={`${prefix}-instructions`}>
             {t('instructions')}
             <textarea
@@ -241,33 +242,35 @@ export function RoleWorkspace({ t, busy, configured, run, notify, workspace = ''
             />
             <small className={css.muted}>{t('instructionsHint')}</small>
           </label>
-          <fieldset disabled={busy}>
-            <legend>{t('customCapabilities')}</legend>
-            <p className={css.muted}>{t('customCapabilitiesHint')}</p>
-            {(['add', 'remove', 'disable', 'includeOptional'] as const).map(key => (
-              <label key={key}>
-                {t(
-                  key === 'add'
-                    ? 'roleAdd'
-                    : key === 'remove'
-                      ? 'roleRemove'
-                      : key === 'disable'
-                        ? 'roleDisable'
-                        : 'roleOptional',
-                )}
-                <input
-                  value={custom[key]}
-                  onChange={(event) => {
-                    setCustom(previous => ({ ...previous, [key]: event.target.value }))
-                    setTemplateId('')
-                    setPlan(null)
-                  }}
-                />
-              </label>
-            ))}
-          </fieldset>
+          <details className={css.advanced}>
+            <summary>{t('customCapabilities')}</summary>
+            <fieldset disabled={busy} aria-label={t('customCapabilities')}>
+              <p className={css.muted}>{t('customCapabilitiesHint')}</p>
+              {(['add', 'remove', 'disable', 'includeOptional'] as const).map(key => (
+                <label key={key}>
+                  {t(
+                    key === 'add'
+                      ? 'roleAdd'
+                      : key === 'remove'
+                        ? 'roleRemove'
+                        : key === 'disable'
+                          ? 'roleDisable'
+                          : 'roleOptional',
+                  )}
+                  <input
+                    value={custom[key]}
+                    onChange={(event) => {
+                      setCustom(previous => ({ ...previous, [key]: event.target.value }))
+                      setTemplateId('')
+                      setPlan(null)
+                    }}
+                  />
+                </label>
+              ))}
+            </fieldset>
+          </details>
           {kind === 'team' && (
-            <fieldset disabled={busy}>
+            <fieldset disabled={busy} className={css.memberSettings}>
               <legend>{t('memberSettings')}</legend>
               <p className={css.muted}>{t('memberSettingsHint')}</p>
               {selected.map((role) => {
@@ -275,49 +278,51 @@ export function RoleWorkspace({ t, busy, configured, run, notify, workspace = ''
                 return (
                   <fieldset key={role}>
                     <legend>{catalog?.find(item => item.id === role)?.name ?? role}</legend>
-                    <label>
-                      {t('memberProvider')}
-                      <input
-                        value={member?.provider ?? ''}
-                        onChange={(event) => {
-                          changeMember(role, { provider: event.target.value || undefined })
-                        }}
-                      />
-                    </label>
-                    <label>
-                      {t('memberModel')}
-                      <input
-                        value={member?.model ?? ''}
-                        onChange={(event) => {
-                          changeMember(role, { model: event.target.value || undefined })
-                        }}
-                      />
-                    </label>
-                    <label>
-                      {t('memberMaxTokens')}
-                      <input
-                        type="number"
-                        min={1}
-                        max={1000000}
-                        value={member?.maxTokens ?? ''}
-                        onChange={(event) => {
-                          changeMember(role, { maxTokens: event.target.value ? Number(event.target.value) : undefined })
-                        }}
-                      />
-                    </label>
-                    <label>
-                      {t('memberMaxSteps')}
-                      <input
-                        type="number"
-                        min={1}
-                        max={1000}
-                        value={member?.maxSteps ?? ''}
-                        onChange={(event) => {
-                          changeMember(role, { maxSteps: event.target.value ? Number(event.target.value) : undefined })
-                        }}
-                      />
-                    </label>
-                    <label>
+                    <div className={css.configGrid}>
+                      <label>
+                        {t('memberProvider')}
+                        <input
+                          value={member?.provider ?? ''}
+                          onChange={(event) => {
+                            changeMember(role, { provider: event.target.value || undefined })
+                          }}
+                        />
+                      </label>
+                      <label>
+                        {t('memberModel')}
+                        <input
+                          value={member?.model ?? ''}
+                          onChange={(event) => {
+                            changeMember(role, { model: event.target.value || undefined })
+                          }}
+                        />
+                      </label>
+                      <label>
+                        {t('memberMaxTokens')}
+                        <input
+                          type="number"
+                          min={1}
+                          max={1000000}
+                          value={member?.maxTokens ?? ''}
+                          onChange={(event) => {
+                            changeMember(role, { maxTokens: event.target.value ? Number(event.target.value) : undefined })
+                          }}
+                        />
+                      </label>
+                      <label>
+                        {t('memberMaxSteps')}
+                        <input
+                          type="number"
+                          min={1}
+                          max={1000}
+                          value={member?.maxSteps ?? ''}
+                          onChange={(event) => {
+                            changeMember(role, { maxSteps: event.target.value ? Number(event.target.value) : undefined })
+                          }}
+                        />
+                      </label>
+                    </div>
+                    <label className={css.checkField}>
                       <input
                         type="checkbox"
                         checked={member?.worktree ?? false}
@@ -346,7 +351,7 @@ export function RoleWorkspace({ t, busy, configured, run, notify, workspace = ''
             </fieldset>
           )}
           <div className={css.actions}>
-            <button disabled={busy || (!selected.length && !instructions.trim())}>{t('saveTemplate')}</button>
+            <button className={css.primary} disabled={busy || (!selected.length && !instructions.trim())}>{t('saveTemplate')}</button>
             {saved.some(item => item.id === id) && (
               <button
                 type="button"
@@ -457,44 +462,47 @@ export function RoleWorkspace({ t, busy, configured, run, notify, workspace = ''
           >
             {t(kind === 'team' ? 'startTeam' : 'applyRole')}
           </button>
-          <button
-            disabled={busy || !sessionId}
-            onClick={() => {
-              void run(async (signal) => {
-                const state = await invoke(`team?sessionId=${encodeURIComponent(sessionId)}`, signal)
-                if (!state || typeof state !== 'object' || !('members' in state) || !Array.isArray(state.members))
-                  throw new HubUiError('HUB_RESPONSE_INVALID')
-                const members = state.members.flatMap((value: unknown) => {
-                  if (!value || typeof value !== 'object' || !('id' in value) || typeof value.id !== 'string'
+          <details className={css.advanced}>
+            <summary>{t('teamReview')}</summary>
+            <div className={css.advancedBody}>
+              <button
+                disabled={busy || !sessionId}
+                onClick={() => {
+                  void run(async (signal) => {
+                    const state = await invoke(`team?sessionId=${encodeURIComponent(sessionId)}`, signal)
+                    if (!state || typeof state !== 'object' || !('members' in state) || !Array.isArray(state.members))
+                      throw new HubUiError('HUB_RESPONSE_INVALID')
+                    const members = state.members.flatMap((value: unknown) => {
+                      if (!value || typeof value !== 'object' || !('id' in value) || typeof value.id !== 'string'
                     || !('name' in value) || typeof value.name !== 'string') throw new HubUiError('HUB_RESPONSE_INVALID')
-                  return 'worktree' in value && value.worktree ? [{ id: value.id, name: value.name }] : []
-                })
-                if (!signal.aborted) { setTeamState(JSON.stringify(state, null, 2)); setReviewMembers(members); setMemberId(members[0]?.id ?? ''); setReview(null); setCommit('') }
-              })
-            }}
-          >
-            {t('inspectTeam')}
-          </button>
-          {teamState && <pre className={css.readme}>{teamState}</pre>}
-          <label>
-            {t('memberSessionId')}
-            <select
-              disabled={busy}
-              value={memberId}
-              onChange={(event) => {
-                setMemberId(event.target.value)
-                setReview(null)
-                setMergeResult('')
-              }}
-            ><option value="">{t('chooseSession')}</option>{reviewMembers.map(member => <option key={member.id} value={member.id}>{member.name} · {member.id}</option>)}</select>
-          </label>
-          <button
-            disabled={busy || !sessionId || !memberId}
-            onClick={() => {
-              void run(async (signal) => {
-                const raw = await invoke('team', signal, { action: 'review', sessionId, memberId })
-                if (
-                  !raw ||
+                      return 'worktree' in value && value.worktree ? [{ id: value.id, name: value.name }] : []
+                    })
+                    if (!signal.aborted) { setTeamState(JSON.stringify(state, null, 2)); setReviewMembers(members); setMemberId(members[0]?.id ?? ''); setReview(null); setCommit('') }
+                  })
+                }}
+              >
+                {t('inspectTeam')}
+              </button>
+              {teamState && <pre className={css.readme}>{teamState}</pre>}
+              <label>
+                {t('memberSessionId')}
+                <select
+                  disabled={busy}
+                  value={memberId}
+                  onChange={(event) => {
+                    setMemberId(event.target.value)
+                    setReview(null)
+                    setMergeResult('')
+                  }}
+                ><option value="">{t('chooseSession')}</option>{reviewMembers.map(member => <option key={member.id} value={member.id}>{member.name} · {member.id}</option>)}</select>
+              </label>
+              <button
+                disabled={busy || !sessionId || !memberId}
+                onClick={() => {
+                  void run(async (signal) => {
+                    const raw = await invoke('team', signal, { action: 'review', sessionId, memberId })
+                    if (
+                      !raw ||
                   typeof raw !== 'object' ||
                   !('mainCommit' in raw) ||
                   typeof raw.mainCommit !== 'string' ||
@@ -502,74 +510,76 @@ export function RoleWorkspace({ t, busy, configured, run, notify, workspace = ''
                   typeof raw.diff !== 'string' ||
                   !('commits' in raw) ||
                   !Array.isArray(raw.commits)
-                )
-                  throw new HubUiError('HUB_RESPONSE_INVALID')
-                const commits = raw.commits.map((value: unknown) => {
-                  if (
-                    !value ||
+                    )
+                      throw new HubUiError('HUB_RESPONSE_INVALID')
+                    const commits = raw.commits.map((value: unknown) => {
+                      if (
+                        !value ||
                     typeof value !== 'object' ||
                     !('commit' in value) ||
                     typeof value.commit !== 'string' ||
                     !('subject' in value) ||
                     typeof value.subject !== 'string'
-                  )
-                    throw new HubUiError('HUB_RESPONSE_INVALID')
-                  return { commit: value.commit, subject: value.subject }
-                })
-                if (!signal.aborted) {
-                  setReview({ mainCommit: raw.mainCommit, diff: raw.diff, commits })
-                  setCommit(commits[0]?.commit ?? '')
-                }
-              })
-            }}
-          >
-            {t('reviewWorktree')}
-          </button>
-          {review && (
-            <>
-              <pre className={css.readme}>{review.diff}</pre>
-              <select
-                disabled={busy}
-                value={commit}
-                onChange={(event) => {
-                  setCommit(event.target.value)
-                }}
-              >
-                {review.commits.map(item => (
-                  <option key={item.commit} value={item.commit}>
-                    {item.commit.slice(0, 10)} · {item.subject}
-                  </option>
-                ))}
-              </select>
-              <button
-                disabled={busy || !commit}
-                onClick={() => {
-                  if (!window.confirm(t('mergeNotice'))) return
-                  void run(async (signal) => {
-                    const result = await invoke('team', signal, {
-                      action: 'merge',
-                      sessionId,
-                      memberId,
-                      commit,
-                      expectedMainCommit: review.mainCommit,
-                      confirmed: true,
+                      )
+                        throw new HubUiError('HUB_RESPONSE_INVALID')
+                      return { commit: value.commit, subject: value.subject }
                     })
                     if (!signal.aborted) {
-                      setMergeResult(JSON.stringify(result))
-                      setReview(null)
+                      setReview({ mainCommit: raw.mainCommit, diff: raw.diff, commits })
+                      setCommit(commits[0]?.commit ?? '')
                     }
                   })
                 }}
               >
-                {t('mergeCommit')}
+                {t('reviewWorktree')}
               </button>
-            </>
-          )}
-          {mergeResult && (
-            <p role="status">
-              {t('mergeResult')}：{mergeResult}
-            </p>
-          )}
+              {review && (
+                <>
+                  <pre className={css.readme}>{review.diff}</pre>
+                  <select
+                    disabled={busy}
+                    value={commit}
+                    onChange={(event) => {
+                      setCommit(event.target.value)
+                    }}
+                  >
+                    {review.commits.map(item => (
+                      <option key={item.commit} value={item.commit}>
+                        {item.commit.slice(0, 10)} · {item.subject}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    disabled={busy || !commit}
+                    onClick={() => {
+                      if (!window.confirm(t('mergeNotice'))) return
+                      void run(async (signal) => {
+                        const result = await invoke('team', signal, {
+                          action: 'merge',
+                          sessionId,
+                          memberId,
+                          commit,
+                          expectedMainCommit: review.mainCommit,
+                          confirmed: true,
+                        })
+                        if (!signal.aborted) {
+                          setMergeResult(JSON.stringify(result))
+                          setReview(null)
+                        }
+                      })
+                    }}
+                  >
+                    {t('mergeCommit')}
+                  </button>
+                </>
+              )}
+              {mergeResult && (
+                <p role="status">
+                  {t('mergeResult')}：{mergeResult}
+                </p>
+              )}
+            </div>
+          </details>
         </section>
       </aside>
     </div>

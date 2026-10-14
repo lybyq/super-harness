@@ -227,12 +227,17 @@ export function fields(document: unknown): ConfigurationField[] {
       throw new HubError('HUB_RESPONSE_INVALID')
     const spec = schema(field.schema)
     if (field.secret && spec.type === 'array') throw new HubError('HUB_CONFIG_SCHEMA_UNSUPPORTED')
+    const declaredDefault = object(field.schema).default
+    if (!field.secret && declaredDefault !== undefined &&
+      (!validValue(spec, declaredDefault) || (spec.enum && !spec.enum.includes(declaredDefault))))
+      throw new HubError('HUB_CONFIG_SCHEMA_UNSUPPORTED')
     return {
       key: text(field.key, 256),
       description: text(field.description, 500, true),
       required: field.required,
       secret: field.secret,
       schema: spec,
+      ...(!field.secret && declaredDefault !== undefined ? { defaultValue: declaredDefault as ConfigurationValue } : {}),
     }
   })
   for (const value of cap.secrets) {
@@ -282,7 +287,7 @@ export function configuration(
     nextSecrets: Record<string, ConfigurationValue> = {}
   for (const field of definitions) {
     if (Object.hasOwn(field.secret ? values : secrets, field.key)) throw new HubError('HUB_CONFIGURATION_INVALID')
-    const value = field.secret ? (secrets[field.key] ?? retainedSecrets[field.key]) : values[field.key]
+    const value = field.secret ? (secrets[field.key] ?? retainedSecrets[field.key]) : (values[field.key] ?? field.defaultValue)
     if (value === undefined || value === '') {
       if (field.required) throw new HubError('HUB_CONFIGURATION_REQUIRED')
       continue

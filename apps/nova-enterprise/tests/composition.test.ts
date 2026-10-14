@@ -25,7 +25,7 @@ test('真实 Loader 组合挂载企业路由，关闭后完整撤销', async () 
   const ctx = await boot('harness-test', configPath)
   const routes = ctx.get('testRoutes')
   try {
-    assert.equal(routes.size, 18)
+    assert.equal(routes.size, 20)
     assert.equal((await call(ctx, 'connection')).ok, true)
     assert.deepEqual(ctx.tools.schemas().map(item => item.name), ['harness_prepare_resource'])
     // 模型看到的声明固定，防止未来改动静默把“仅草稿”变成执行／远端发布工具。

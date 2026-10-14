@@ -15,3 +15,4 @@
     engineEntry: !!js process.env.HARNESS_TEST_ENGINE_ENTRY ?? ''
     deploymentFile: !!js process.env.HARNESS_TEST_DEPLOYMENT_FILE ?? ''
     resourceHome: !!js process.env.HARNESS_TEST_RESOURCE_HOME ?? ''
+    defaultMcpFile: !!js process.env.HARNESS_TEST_DEFAULT_MCP_FILE ?? ''

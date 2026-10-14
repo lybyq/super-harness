@@ -1,0 +1,15 @@
+{
+  "revision": "enterprise-tools-1",
+  "mcp": [
+    { "id": "yapi" },
+    { "id": "memory" },
+    { "id": "nova-ui-plus" },
+    { "id": "markitdown" },
+    { "id": "jira" },
+    { "id": "dbhub" },
+    { "id": "playwright" },
+    { "id": "gitlab" },
+    { "id": "wiki" },
+    { "id": "codegraph" }
+  ]
+}

@@ -11,6 +11,7 @@ import { IconSearchOutlineRegular } from '@deepseek-ai/dsh-client-ui-primitives'
 import { HubPanel } from './HubPanel.tsx'
 import { en, zh } from './locales.ts'
 import { NovaBrandMark, NovaBrandName } from './NovaBrand.tsx'
+import { McpSetup } from './McpSetup.tsx'
 
 declare module '@deepseek-ai/dsh-client-ui-slots' {
   interface LocaleNamespaceMap {
@@ -48,6 +49,7 @@ export function apply(ctx: Context): void {
       props => createElement(NovaBrandMark, { ...props, brand })))
   }
   ctx.slots.inject('main', () => ctx.slots.register({ name: 'main', key: PANEL, locale: NS }, HubPanel))
+  ctx.slots.inject('shell.overlay', () => ctx.slots.register({ name: 'shell.overlay', id: 'nova-mcp-setup', order: 1, locale: NS }, McpSetup))
   ctx.slots.inject('sidebar.panellist', () =>
     ctx.slots.register(
       { name: 'sidebar.panellist', id: PANEL, order: 1, label: () => t('panel'), locale: NS },

@@ -83,7 +83,7 @@ test('panel snapshot enters the catalog without URL or token inputs and no misle
   assert.deepEqual(text, [
     'AI Hub', '企业能力中心', '搜索内网能力，并管理每个能力的参数与凭据。',
     '配置与安装范围', '用户级（所有项目）', '项目配置与账号独立保存；项目列表来自已打开的会话。Host 插件和 Bundle 请在用户级安装。',
-    '能力目录', '角色组合', '已安装', '开发与发布',
+    '统一配置 MCP', '能力目录', '角色组合', '已安装', '开发与发布',
     '全部类型', 'mcp', 'skill', 'plugin', 'agent', 'hook', 'policy', 'pack', '搜索能力',
     '企业能力目录将在进入后自动加载。',
     '精确版本安装与真实运行结果分别显示；工具权限继续由 Nova 原生策略控制。',

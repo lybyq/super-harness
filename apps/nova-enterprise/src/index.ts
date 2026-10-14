@@ -14,6 +14,8 @@ import { protectedCredentials, windowsCredentialCipher } from './credential-prot
 import { CapabilityTools } from './capability-tools.ts'
 import { resourceDrafts } from './resource-drafts.ts'
 import { seedBuiltinThemes } from './builtin-themes.ts'
+import { readDefaultMcpPlan } from './default-mcp.ts'
+import { saveMcpConfigurations } from './mcp-configurations.ts'
 import { dshHomePath } from '@deepseek-ai/dsh-home-paths'
 export { CapabilityTools } from './capability-tools.ts'
 export type { TeamMemberSettings, TeamTaskSettings } from './types.ts'
@@ -57,6 +59,7 @@ export const Config = Schema.object({
   resourceHome: Schema.string()
     .default('')
     .description('Desktop-owned immutable resource Store root, separate from CLI state.'),
+  defaultMcpFile: Schema.string().default('').description('Deployment-owned JSON default MCP manifest; empty disables automatic installation.'),
   maxHistory: Schema.natural().min(1).max(100).default(10).description('Number of retained capability revisions.'),
   offlineMaxEntries: Schema.natural()
     .min(1)
@@ -109,6 +112,7 @@ export type Config = Pick<
   | 'engineEntry'
   | 'deploymentFile'
   | 'resourceHome'
+  | 'defaultMcpFile'
   | 'maxHistory'
   | 'offlineMaxEntries'
   | 'offlineMaxBytes'
@@ -165,6 +169,7 @@ function publicForm(document: unknown, saved: StoredConfiguration) {
     if (field.secret) {
       if (Object.hasOwn(saved.secrets, field.key)) configuredSecrets.push(field.key)
     } else if (Object.hasOwn(saved.values, field.key)) values[field.key] = saved.values[field.key]
+    else if (field.defaultValue !== undefined) values[field.key] = field.defaultValue
   }
   return {
     capability: summary(document),
@@ -214,6 +219,13 @@ export function apply(ctx: Context, options: Config) {
     })
     : undefined
   const client = online ? offlineClient(ctx, online, capabilityKey(base, 'hub-read-cache'), options) : undefined
+  // 立即接住文件错误，防止启动器尚未 ready 时出现未处理拒绝；只由调用方报告稳定码。
+  const defaults = readDefaultMcpPlan(options.defaultMcpFile).then(plan => ({ plan }), () => ({ error: new HubError('HUB_DEFAULT_MCP_INVALID') }))
+  const defaultPlan = async () => {
+    const result = await defaults
+    if ('error' in result) throw result.error
+    return result.plan
+  }
   const readConfiguration = async (id: string) =>
     storedConfiguration(await credentials.readRecord(capabilityKey(base, id)))
   const lifecycle = capabilityLifecycle(
@@ -260,6 +272,7 @@ export function apply(ctx: Context, options: Config) {
     },
     'harness capability runtime',
   )
+  const startup = Promise.withResolvers<void>()
   ctx.effect(() => {
     let cancelled = false
     const restore = () => {
@@ -267,6 +280,8 @@ export function apply(ctx: Context, options: Config) {
       void (async () => {
         await roleService.restore()
         await lifecycle.restore()
+        const plan = await defaultPlan()
+        if (plan) await lifecycle.bootstrap(plan)
         for (const workspace of workspaces(ctx)) {
           await scoped(new Request(`http://harness.local/?workspace=${workspace.id}`)).lifecycle.restore()
         }
@@ -275,13 +290,14 @@ export function apply(ctx: Context, options: Config) {
           'harness startup restore failed (%s)',
           error instanceof HubError ? error.code : 'HUB_OPERATION_FAILED',
         )
-      })
+      }).finally(() => { startup.resolve() })
     }
     // 正式桌面由官方启动器通知；独立 Loader 组合没有启动器时，在当前插件挂载完成后恢复。
     const ready = ctx.get('appReady')
     const dispose = ready ? ready.onReady(restore) : (queueMicrotask(restore), () => {})
     return () => {
       cancelled = true
+      startup.resolve()
       dispose()
     }
   }, 'harness startup restoration')
@@ -488,6 +504,7 @@ export function apply(ctx: Context, options: Config) {
       return Promise.resolve({
         configured: Boolean(client),
         authentication: options.authentication,
+        ...(options.defaultMcpFile ? { defaultMcpEnabled: true } : {}),
         ...(workspaces(ctx).length ? { workspaces: workspaces(ctx) } : {}),
       })
     },
@@ -514,6 +531,36 @@ export function apply(ctx: Context, options: Config) {
           ...(installed.find(row => row.id === item.id) ?? {}),
         })),
       }
+    },
+    'mcp-defaults': async (request) => {
+      await startup.promise
+      const plan = await defaultPlan()
+      if (request.method === 'POST') {
+        if (!plan) throw new HubError('HUB_DEFAULT_MCP_INVALID')
+        const input = await body(request)
+        if (Object.keys(input).some(key => key !== 'action')) throw new HubError('HUB_REQUEST_INVALID')
+        if (input.action === 'retry') await lifecycle.bootstrap(plan, true)
+        else if (input.action === 'dismiss') await lifecycle.dismissDefaults(plan)
+        else throw new HubError('HUB_REQUEST_INVALID')
+      }
+      return lifecycle.defaults(plan)
+    },
+    'mcp-configurations': async (request) => {
+      await startup.promise
+      const { client } = await connected(), target = scoped(request)
+      if (request.method === 'POST') return saveMcpConfigurations(await body(request), target.lifecycle, client, credentials, target.key)
+      const data = [], errors: { id: string; code: string }[] = []
+      for (const installed of await target.lifecycle.list()) {
+        try {
+          const document = await client.capability(installed.id, request.signal)
+          if (summary(document).type !== 'mcp') continue
+          const result = publicForm(document, storedConfiguration(await credentials.readRecord(target.key(installed.id))))
+          data.push({ ...result, capability: { ...result.capability, ...installed } })
+        } catch (error) {
+          errors.push({ id: installed.id, code: error instanceof HubError ? error.code : 'HUB_OPERATION_FAILED' })
+        }
+      }
+      return { data, errors }
     },
     configuration: async (request) => {
       const { client } = await connected()

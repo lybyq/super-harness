@@ -56,6 +56,7 @@ Nova Desktop Host 的部署补丁将此包挂载在官方界面旁。
 | maxRequestBytes | 65536 | 配置请求字节上限，正整数，最多 1048576 |
 | engineEntry | 空 | 为空使用内置 `lib/engine.js` 和 npm CLI（命令行界面）；可选开发入口用于定位共享包，不执行 CLI |
 | deploymentFile | 空 | 可信源 DeploymentProfile；Hub URL 和 Runtime 必须与桌面一致 |
+| defaultMcpFile | 空 | 部署维护的 JSON 路径；空值禁用默认 MCP 自动安装 |
 | resourceHome | 空 | 桌面专属 Store 根目录，不与 CLI 状态共用 |
 | seedBuiltinThemes | false | 初始化缺失的离线主题；Desktop Host 默认开启，不改变当前皮肤 |
 | maxHistory | 10 | 最多保留的能力变更历史，范围 1–100 |
@@ -89,7 +90,17 @@ Windows Desktop 默认 `windows-dpapi`，可用 `HARNESS_SECRET_PROTECTION` 显�
 
 支持字符串、数值、整数、布尔值、标量枚举、绝对 URI，以及带成员约束、数量限制和去重要求的字符串数组。数组通过 JSON 文本框填写，例如 `["NOVA", "PLATFORM"]`。Host 会重新读取 Hub 声明，校验必填项和受支持的范围限制。URI 校验只验证语法，不是出站网络权限策略。
 
-未知约束、嵌套对象、引用、密钥数组、重复键及非用户级密钥作用域会被拒绝。Schema 默认值不返回浏览器、不自动注入。stdio MCP 的合法环境变量键直接映射，其他键使用绑定的 `env`／`args` 显式 `${KEY}` 引用；HTTP MCP 用 `url`／`headers`。原生 Host Plugin 的绑定配置按相同占位符注入。Skill 公开参数附到模型可见正文，秘密必须配置在它调用的 MCP 上。
+未知约束、嵌套对象、引用、密钥数组、重复键及非用户级密钥作用域会被拒绝。经过校验的公开 Schema 默认值显示在表单中，并补足未提交的公开参数；秘密默认值永不显示或注入。stdio MCP 的合法环境变量键直接映射，其他键使用绑定的 `env`／`args` 显式 `${KEY}` 引用；HTTP MCP 用 `url`／`headers`。原生 Host Plugin 的绑定配置按相同占位符注入。Skill 公开参数附到模型可见正文，秘密必须配置在它调用的 MCP 上。
+
+### 默认 MCP 与统一配置
+
+复制[十个资源示例](../../nova/default-mcp.example.json)为部署维护的 `default-mcp.json`。将 ID 改成 Hub 的准确资源 ID，不是 npm 包名；其中 `gitlab`、`wiki`、`codegraph` 明确为占位值。启动环境中设置 `NOVA_DEFAULT_MCP_FILE` 为该文件绝对路径，然后完全退出并重启 Desktop。[环境示例](../../nova/deployment-env.example.ps1)同时提供已有的 Hub、可信来源和资源目录配置。文件只接受 `revision` 与 `mcp: [{ id, version? }]`；版本必须精确。不填版本时首次选择 Hub 推荐版本，安装后由本地状态固定实际版本。
+
+启动通过共享安装器在用户范围安装清单中缺失的 MCP，保留已安装版本、停用项及明确移除项。从部署文件删除 ID 只是停止自动安装，不会卸载用户已有资源。同一清单的失败项需要点击**重试安装**或变更清单才重试，不在每次启动重复外部操作。错误 ID 或下载失败逐项显示，不丢弃其他独立成功项。修改文件后需重启。将来增加 MCP 只需正确的 Hub 声明和新增 ID，不需要增加业务代码分支。
+
+默认项尚未就绪时，启动准备后弹出分组配置窗口。之后从 **AI Hub → 统一配置 MCP** 再次打开；面板选择的用户／项目范围决定配置记录。字段、说明、必填标记及公开默认值均读取当前 Hub Schema。勾选本次保存的资源，填写后一次提交。所有选中表单先整体校验，再执行保存和重载；之后的存储失败按资源分别报告。同名环境变量按资源隔离，秘密留空保留旧值，已提交秘密草稿会清空。单项删除秘密仍在资源详情中操作。保存成功与工具激活是两个结果。变更运行实例时若已有 Agent 正在运行会拒绝，请等回合结束后重试；此空闲检查不是阻止新回合启动的全局锁。
+
+在**已安装**中更新、启用、停用或移除资源，在目录搜索中添加或重新安装。停用释放本次实例并保留配置；明确移除后不会在重启时自动装回。缺少必填参数的 MCP 不注册为活跃工具。角色限制和原生权限仍对已安装工具生效，角色必须包含会话需要的 MCP。以上流程已有本地 Loader／stdio MCP 与浏览器组件验证；真实内网 ID、私有源凭据、业务账号和工具调用仍须在目标网络验收。
 
 安装需要部署提供 `NOVA_DEPLOYMENT_CONFIG` 和 `HARNESS_DESKTOP_RESOURCE_HOME`，`HARNESS_ENGINE_ENTRY` 可不填。桌面包包含共享 core／installer／contracts 库、YAML 解析器及 npm CLI。npm 使用桌面专属临时目录和缓存，默认禁用脚本。部署文件列出 GitLab／npm 源、可信下载主机及独立 `authRef` 环境变量。安装按 npm 包名＋精确版本＋integrity、GitLab SHA＋entryPath 定位，拒绝已变缓存。可选开发入口要求共享包已构建；最终用户交付不需要 Hub 源码目录。
 

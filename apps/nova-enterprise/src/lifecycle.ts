@@ -5,6 +5,8 @@ import { capabilityId, configuration, fields, object } from './catalog.ts'
 import { HubError } from './hub-client.ts'
 import { runtimeProvider } from './runtime-provider.ts'
 import { roleAccess } from './role-access.ts'
+import { defaultMcpJournal } from './default-mcp.ts'
+import type { DefaultMcpPlan, DefaultMcpJournal } from './default-mcp.ts'
 import type { Context } from '@deepseek-ai/cordis'
 import type { CredentialKey } from '@deepseek-ai/dsh-credentials'
 import type { HubClient } from './hub-client.ts'
@@ -25,6 +27,7 @@ interface LocalState {
   desired: DesiredState | undefined
   receipts: Record<string, unknown>
   history: Revision[]
+  defaults?: DefaultMcpJournal
 }
 
 /**
@@ -81,7 +84,8 @@ export function capabilityLifecycle(
         throw new HubError('HUB_LOCAL_STATE_INVALID')
       }
     }
-    return { desired, receipts, history }
+    const defaults = defaultMcpJournal(state.defaults)
+    return { desired, receipts, history, ...(defaults ? { defaults } : {}) }
   }
   const write = (state: LocalState) =>
     ctx.credentials.modifyRecord(key, () => Promise.resolve({ kind: 'grant', payload: state }))
@@ -141,6 +145,33 @@ export function capabilityLifecycle(
       activation: outcomes.get(item.id) ?? (item.enabled ? 'downloaded' : 'disabled'),
     }))
   }
+  /** @returns 会话运行期间拒绝更换工具实例，不通过静默中断 Agent 实现重载。 */
+  function requireIdle(): void {
+    if (ctx.get('agents')?.list().some(agent => agent.status !== 'idle')) throw new HubError('HUB_CAPABILITY_BUSY')
+  }
+  /**
+   * @param ids 配置涉及的资源。
+   * @param update 锁内更新，可返回逐项保存结果。
+   * @param checkedId 单资源保存需要将其激活失败作为异常返回。
+   * @returns 只协调重载一次；写入失败仍按已提交配置恢复实例。
+   */
+  function configureMany<T>(ids: string[], update: () => Promise<T>, checkedId?: string): Promise<T> {
+    return serial(async () => {
+      const state = await read()
+      if (!state.desired?.capabilities.some(item => ids.includes(item.id))) return update()
+      requireIdle()
+      await runtime.close()
+      outcomes.clear()
+      let result: T
+      try { result = await update() } catch (error) {
+        try { await reconcile(state, true) } catch (_restoreError) { throw new HubError('HUB_ROLLBACK_FAILED') }
+        throw error
+      }
+      await reconcile(state, true)
+      if (checkedId && outcomes.get(checkedId) === 'failed') throw new HubError('HUB_CONFIGURATION_ACTIVATION_FAILED')
+      return result
+    })
+  }
   return {
     /** @returns 等待恢复／变更操作收尾，再返回稳定的激活证据，不暴露半恢复快照。 */
     async list() {
@@ -148,39 +179,102 @@ export function capabilityLifecycle(
       return list()
     },
     access,
+    configureMany,
     /**
      * @param id 精确能力标识。
      * @param update 原子配置修改，只有 Host 可以读取旧密钥。
      * @returns 配置提交后加载新实例；失败明确标为 failed，不继续使用旧凭据。
      */
     configure(id: string, update: () => Promise<unknown>) {
+      return configureMany([id], async () => {
+        await update()
+      }, id)
+    },
+    /** @param plan 部署默认清单。 @returns 逐项真实状态；移除覆盖和停用状态不被企业默认值抹去。 */
+    defaults(plan: DefaultMcpPlan | undefined) {
       return serial(async () => {
-        const state = await read(),
-          selected = state.desired?.capabilities.find(item => item.id === id)
-        if (!selected) {
-          await update()
-          return
+        const state = await read(), installed = await list()
+        return {
+          configured: Boolean(plan), revision: plan?.revision ?? '',
+          dismissed: state.defaults?.signature === plan?.signature && state.defaults?.dismissed === true,
+          items: (plan?.mcp ?? []).map((item) => {
+            const current = installed.find(row => row.id === item.id)
+            return { id: item.id, ...(item.version ? { requestedVersion: item.version } : {}),
+              ...(current ?? { installed: false, enabled: false, version: '',
+                activation: state.desired?.overrides.remove.includes(item.id) ? 'removed' : 'not-installed' }),
+              ...(state.defaults?.signature === plan?.signature && state.defaults?.errors[item.id]
+                ? { error: state.defaults.errors[item.id] } : {}),
+            }
+          }),
         }
-        await runtime.close()
-        outcomes.clear()
+      })
+    },
+    /** @param plan 当前清单。 @returns 记住本次“稍后配置”，不取消已安装资源，新增清单仍可提示。 */
+    dismissDefaults(plan: DefaultMcpPlan) {
+      return serial(async () => {
+        const state = await read()
+        await write({ ...state, defaults: { revision: plan.revision, signature: plan.signature, dismissed: true,
+          errors: state.defaults?.signature === plan.signature ? state.defaults.errors : {} } })
+      })
+    },
+    /**
+     * @param plan 企业清单，只在用户作用域自动运行。
+     * @param retry 明确重试失败项；日常启动不重复失败的外部安装，也不升级用户已有版本。
+     * @returns 下载结果持久保存后协调一次加载；单个失败不丢弃其他已准备资源。
+     */
+    bootstrap(plan: DefaultMcpPlan, retry = false) {
+      return serial(async () => {
+        if (!client) throw new HubError('HUB_NOT_CONFIGURED')
+        const e = await engine()
+        await mkdir(options.resourceHome, { recursive: true })
+        const lock = e.lock()
+        await lock.acquire()
         try {
-          await update()
-        } catch (error) {
-          try {
-            await reconcile(state)
-          } catch (_restoreError) {
-            outcomes.set(id, 'failed')
-            throw new HubError('HUB_ROLLBACK_FAILED')
+          const before = await read()
+          let desired = before.desired ?? e.empty()
+          let receipts = { ...before.receipts }, changed = false
+          const previous = before.defaults?.signature === plan.signature ? before.defaults : undefined
+          const errors = new Map(Object.entries(previous?.errors ?? {}))
+          for (const item of plan.mcp) {
+            if (desired.capabilities.some(row => row.id === item.id) || desired.overrides.remove.includes(item.id)) {
+              errors.delete(item.id)
+              continue
+            }
+            if (errors.has(item.id) && !retry) continue
+            try {
+              const document = e.parseCapability(await client.capability(item.id))
+              if (document.type !== 'mcp') throw new HubError('HUB_RUNTIME_UNSUPPORTED')
+              const candidate = await e.manager.add(desired, item.id, item.version)
+              const prepared: Record<string, InstallReceipt> = {}
+              for (const capability of candidate.capabilities) {
+                const cap = e.parseCapability(await client.capability(capability.id))
+                const version = cap.versions.find(row => row.version === capability.version)
+                if (!version?.runtimeBindings['deepseek-harness']) throw new HubError('HUB_RUNTIME_UNSUPPORTED')
+                prepared[capability.id] = { ...(await e.artifact.install(cap, version)), version: capability.version }
+              }
+              desired = candidate
+              receipts = prepared
+              changed = true
+              errors.delete(item.id)
+            } catch (error) {
+              errors.set(item.id, error instanceof HubError ? error.code : 'HUB_DEFAULT_MCP_INSTALL_FAILED')
+              ctx.logger.warn('harness default MCP unavailable: %s (%s)', item.id, errors.get(item.id))
+            }
           }
-          throw error
-        }
-        try {
-          await reconcile(state, true)
-          if (outcomes.get(id) === 'failed') throw new HubError('HUB_CONFIGURATION_ACTIVATION_FAILED')
-        } catch (_error) {
-          outcomes.set(id, 'failed')
-          throw new HubError('HUB_CONFIGURATION_ACTIVATION_FAILED')
-        }
+          const defaults: DefaultMcpJournal = { revision: plan.revision, signature: plan.signature,
+            dismissed: previous?.dismissed ?? false, errors: Object.fromEntries(errors) }
+          const next = { ...before, desired: changed ? desired : before.desired, receipts, defaults }
+          if (changed) {
+            requireIdle()
+            await runtime.close()
+            outcomes.clear()
+          }
+          try { await write(next) } catch (error) {
+            if (changed && before.desired) await reconcile(before, true)
+            throw error
+          }
+          if (changed) await reconcile(next, true)
+        } finally { await lock.release() }
       })
     },
     /** @returns 无参数值或密钥的回滚历史。 */
@@ -257,6 +351,7 @@ export function capabilityLifecycle(
             }
           }
           const next = {
+            ...before,
             desired,
             receipts,
             history:
@@ -273,6 +368,7 @@ export function capabilityLifecycle(
                 ].slice(-options.maxHistory),
           }
           // 下载可以留下可复用的不可变缓存；只有完整激活/待配置结果才提交用户期望状态。
+          requireIdle()
           try {
             await runtime.close()
             outcomes.clear()

@@ -1,0 +1,17 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "incremental": false,
+    "declaration": false,
+    "declarationMap": false,
+    "rewriteRelativeImportExtensions": false
+  },
+  "include": ["default-mcp.test.ts", "default-mcp.composition.test.ts", "mcp-configurations.test.ts", "role-skill-materials.test.ts"],
+  "references": [
+    { "path": "../tsconfig.host.json" },
+    { "path": "../tsconfig.client.json" },
+    { "path": "../../../packages/core/tools" }
+  ]
+}

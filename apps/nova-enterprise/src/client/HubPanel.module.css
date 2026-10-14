@@ -20,6 +20,18 @@
   scrollbar-gutter: stable;
 }
 .panel *, .panel *::before, .panel *::after { box-sizing: border-box; }
+.mcpDialog.panel { position: fixed; width: min(1040px, calc(100vw - 40px)); height: auto; max-height: calc(100dvh - 48px); margin: auto; padding: 24px 28px; border: 1px solid var(--hub-border); border-radius: 16px; pointer-events: auto; box-shadow: 0 22px 80px #0004; animation: panelIn 180ms ease-out; }
+.mcpDialog::backdrop { background: #10182766; backdrop-filter: blur(4px); }
+.mcpDialogHeader { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; padding-bottom: 12px; border-bottom: 1px solid var(--hub-border); }
+.mcpDialogHeader>div { flex: 1; }
+.mcpResource { padding: 18px 0; border-bottom: 1px solid var(--hub-border); }
+.mcpResource .configSection { min-width: 0; }
+.mcpResource .configGrid { clear: both; }
+.mcpResource .field { display: flex; flex-direction: column; gap: 8px; margin: 12px 0; font-size: 13px; }
+.mcpResource .field>input, .mcpResource .field>select, .mcpResource .field>textarea { width: 100%; }
+.mcpResource .field>span { overflow-wrap: anywhere; }
+.mcpResource>.actions>label { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-weight: 600; }
+.mcpDialogFooter { position: sticky; bottom: -24px; margin: 0 -28px -24px; padding: 16px 28px; background: var(--hub-surface); border-top: 1px solid var(--hub-border); display: flex; justify-content: space-between; align-items: center; gap: 20px; }
 .header { display: flex; align-items: center; justify-content: space-between; gap: 24px; margin-bottom: 20px; }
 .headerCompact h1 { font-size: 22px; }
 .headerCompact p { display: none; }
@@ -174,6 +186,7 @@
   .tabs button { padding: 8px 10px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .mcpDialog.panel { animation: none !important; }
   .panel *, .panel *::before, .panel *::after { animation: none !important; transition: none !important; }
   .row:hover, .panel button:active:enabled { transform: none; }
 }

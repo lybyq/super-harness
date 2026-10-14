@@ -180,12 +180,14 @@ export function connection(value: unknown): {
   configured: boolean
   authentication: 'none' | 'bearer'
   workspaces: { id: string; cwd: string }[]
+  defaultMcpEnabled?: boolean
 } {
   const item = object(value)
   if (item.authentication !== 'none' && item.authentication !== 'bearer') throw new HubUiError('HUB_RESPONSE_INVALID')
   return {
     configured: boolean(item.configured),
     authentication: item.authentication,
+    ...(item.defaultMcpEnabled === undefined ? {} : { defaultMcpEnabled: boolean(item.defaultMcpEnabled) }),
     workspaces:
       item.workspaces === undefined
         ? []
@@ -194,6 +196,41 @@ export function connection(value: unknown): {
           return { id: text(row.id), cwd: text(row.cwd) }
         }),
   }
+}
+
+/** 默认安装处理记录只显示资源、固定版本和状态，不接收下载地址或秘密。 */
+export interface DefaultMcpStatus {
+  configured: boolean
+  revision: string
+  dismissed: boolean
+  items: { id: string; installed: boolean; enabled: boolean; version: string; activation: string; error?: string }[]
+}
+/** @param value Host 默认安装状态。 @returns 经字段校验的脱敏结果。 */
+export function defaultMcpStatus(value: unknown): DefaultMcpStatus {
+  const item = object(value)
+  return { configured: boolean(item.configured), revision: text(item.revision), dismissed: boolean(item.dismissed),
+    items: array(item.items).map((value) => {
+      const row = object(value)
+      return { id: text(row.id), installed: boolean(row.installed), enabled: boolean(row.enabled),
+        version: text(row.version), activation: text(row.activation),
+        ...(row.error === undefined ? {} : { error: text(row.error) }) }
+    }) }
+}
+/** @param value Host 所有已安装 MCP 的动态表单。 @returns 每项独立解析；错误只包含稳定码。 */
+export function mcpForms(value: unknown): { data: Form[]; errors: { id: string; code: string }[] } {
+  const item = object(value)
+  return { data: array(item.data).map(form), errors: array(item.errors).map((value) => {
+    const row = object(value)
+    return { id: text(row.id), code: text(row.code) }
+  }) }
+}
+/** @param value 批量配置的逐项结果。 @returns 保存与激活分开呈现，不把部分失败当作成功。 */
+export function mcpSaveResults(value: unknown): { id: string; saved: boolean; activation: string; error?: string }[] {
+  return array(object(value).results).map((value) => {
+    const row = object(value)
+    return { id: text(row.id), saved: boolean(row.saved), activation: text(row.activation),
+      ...(row.error === undefined ? {} : { error: text(row.error) }) }
+  })
 }
 /**
  * @param value Host 响应值。

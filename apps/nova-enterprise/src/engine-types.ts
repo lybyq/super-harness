@@ -63,6 +63,7 @@ export interface DeploymentProfile {
 /** 共享解析器的期望状态；包含共享 Schema 保留的完整权限和覆盖信息。 */
 export interface DesiredState {
   capabilities: { id: string; version: string; enabled: boolean }[]
+  overrides: { remove: string[]; [key: string]: unknown }
   [key: string]: unknown
 }
 /** 消费端只调用 parse；输入必须是不可信 unknown，不能通过类型声明绕过运行校验。 */

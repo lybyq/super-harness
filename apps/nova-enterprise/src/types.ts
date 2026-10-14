@@ -34,6 +34,7 @@ export interface ConfigurationField {
   required: boolean
   secret: boolean
   schema: FieldSchema
+  defaultValue?: ConfigurationValue
 }
 /** 角色列表准入后的公开摘要。 */
 export interface RoleSummary {

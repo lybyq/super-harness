@@ -12,7 +12,7 @@ const doc = {
 }
 
 test('deployment limits are resolved and reject fractional or zero budgets', () => {
-  assert.deepEqual(Config({}), { seedBuiltinThemes: false, secretProtection: 'none', apiBaseUrl: '', authentication: 'none', tokenEnvironmentVariable: 'NOVA_HUB_TOKEN', allowInsecureHttp: false, timeoutMs: 15000, maxResponseBytes: 2097152, maxRequestBytes: 65536, engineEntry: '', deploymentFile: '', resourceHome: '', maxHistory: 10, teamProvider: 'spawn', teamStartupTimeoutMs: 60000, offlineMaxEntries: 200, offlineMaxBytes: 16777216, offlineMaxAgeMs: 86400000, activationTimeoutMs: 30000, allowPublishing: false, publishingTimeoutMs: 120000 })
+  assert.deepEqual(Config({}), { seedBuiltinThemes: false, secretProtection: 'none', apiBaseUrl: '', authentication: 'none', tokenEnvironmentVariable: 'NOVA_HUB_TOKEN', allowInsecureHttp: false, timeoutMs: 15000, maxResponseBytes: 2097152, maxRequestBytes: 65536, engineEntry: '', deploymentFile: '', resourceHome: '', defaultMcpFile: '', maxHistory: 10, teamProvider: 'spawn', teamStartupTimeoutMs: 60000, offlineMaxEntries: 200, offlineMaxBytes: 16777216, offlineMaxAgeMs: 86400000, activationTimeoutMs: 30000, allowPublishing: false, publishingTimeoutMs: 120000 })
   assert.throws(() => Config({ timeoutMs: 0 }))
   assert.throws(() => Config({ timeoutMs: 1.5 }))
   assert.throws(() => Config({ authentication: 'auto' }))
@@ -139,7 +139,7 @@ test('invalid deployment URL fails at plugin load rather than inviting user conf
 })
 test('all route registrations are removed by plugin disposal', async (t) => {
   const f = await fixture(t)
-  assert.equal(f.routes.size, 18)
+  assert.equal(f.routes.size, 20)
   for (const dispose of f.effects.splice(0).reverse()) await dispose()
   assert.equal(f.routes.size, 0)
 })

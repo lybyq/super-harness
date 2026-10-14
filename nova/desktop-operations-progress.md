@@ -66,3 +66,15 @@
 - 最终生产应用验证通过：Node 24.21.0、koffi/sharp/html、PTY、pnpm、grep/glob、CLI 离线插件安装与卸载、真实 Host 启动，以及 DOCX/XLSX/PPTX 转 PDF。生产载荷包含 Nova 与 `dsh-context@0.69.1` 及其内网补丁。
 - 尚未实际安装此安装器或验证真实内网模型／Hub／MCP。正式员工发放需内网干净电脑验收，并根据公司政策完成代码签名；未签名包不代表已完成正式签名发布。
 - 源码迁移使用 `nova-desktop-source-20261013-installer.zip`，Builder 材料使用 `nova-desktop-builder-20261013-installer.7z`；发送目录中的简短文件名更新为本次版本。依赖锁未变化，开发 store 与 npm 原始包不重建，旧归档保留。
+
+## 默认 MCP 与角色 Skill 交付检查点（2026-10-15）
+
+- 初始本地界面改动已正常提交并推送 `codex/nova-enterprise`。本次不上传私有源、不启动生产模型、不改变用户已有 Profile。
+- 新增部署默认清单 `nova/default-mcp.example.json`，通过 `NOVA_DEFAULT_MCP_FILE` 注入；`gitlab`、`wiki`、`codegraph` 按用户要求占位，内网替换为真实 Hub ID。默认安装保留既有版本、停用和显式移除，失败项显式重试。
+- 新增统一 MCP 动态表单、批量校验与一次重载协调；保留同资源旧秘密、隔离同名参数、逐项报告存储及激活结果。不修改 Agent Loop，不取消官方原生权限。空闲检查不是阻止新回合开始的全局锁。
+- 默认安装真实 Loader／stdio MCP 集成、批量保存、跨启动移除／停用／离线恢复、公开默认值及秘密保护、Client 行为测试通过；Host/Client 与新增 Node 测试程序类型检查、新源码定向类型感知 lint、导出 JSDoc 检查通过。旧 `routes.test.ts` 和 `composition.test.ts` 的独立类型感知 lint 仍有既有测试类型配置问题，不据此声称全库 lint 通过。
+- 真实 Edge 明暗主题、1440／430px 布局、减少动画、十项分组及关闭检查通过；截图和结果在 `D:/nova-package/mcp-setup-preview-20261015`。
+- 文档快速门禁 21 项全部通过；未重跑全量 doc-sync。Host 路由／默认 MCP 回归合计 22 项通过，旧的可选外部 Hub 组合场景未配置来源而跳过，新的本地 stdio 全流程实际执行通过。
+- Hub 打包脚本固定上游 Git 提交，输出 136 个完整去重 Skill、九个角色 ZIP 和 RoleProfile；前端 27、大前端 28，包含 Nuxt 与 AI 开发能力。材料在 `D:/nova-package/role-skill-delivery-20261015/delivery`，最大 ZIP 约 7.2 MB；保留许可和源码记录，未执行第三方脚本。独立许可未确认的 doc-coauthoring 不分发。
+- 解压后 1860 个文件哈希一致，全部 136 Skill 经官方 Provider 可发现并读取，入口本地引用完整。Hub 导入 CLI 新增 `--directory`，九角色真实 dry-run 验证通过且零写入；角色默认包含十个 MCP，映射文件为 Hub 的 `manifests/role-skills/mcp-id-mapping.example.json`。
+- 操作手册在 Hub 仓库 `docs/default-mcp-role-skills-handoff.md`。内网必须验证真实 ID、来源认证、业务参数、工具调用及最终安装包；Skill ZIP 不包含项目 npm 包、Python wheels 或浏览器运行时，也不是新 EXE。

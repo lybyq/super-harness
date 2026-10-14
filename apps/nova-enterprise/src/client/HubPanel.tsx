@@ -17,6 +17,8 @@ import {
 import { RoleWorkspace } from './RoleWorkspace.tsx'
 import { AuthoringPanel } from './AuthoringPanel.tsx'
 import { HubIcon } from './HubIcon.tsx'
+import { ConfigurationInput } from './ConfigurationInput.tsx'
+import { openMcpConfiguration } from './McpSetup.tsx'
 import { zh, type HubLocaleKey } from './locales.ts'
 import css from './HubPanel.module.css'
 
@@ -88,6 +90,11 @@ export function HubPanel({ t }: PanelProps): ReactNode {
       operation.current = null
     }
   }, [])
+  useEffect(() => {
+    const refresh = () => { if (!selected && ['capabilities', 'installed'].includes(mode)) void run(signal => search(page, signal)) }
+    window.addEventListener('nova:mcp-updated', refresh)
+    return () => { window.removeEventListener('nova:mcp-updated', refresh) }
+  }, [selected, mode, page, query, type, workspace])
   /**
    * 进入或重试时读取管理员配置并加载目录；未配置和连接失败都显示可操作的本地化错误。
    * @param signal 当前界面操作的取消信号，卸载后不再更新状态。
@@ -250,100 +257,18 @@ export function HubPanel({ t }: PanelProps): ReactNode {
    * @param field Host 返回的字段声明；最终安全校验仍在 Host 执行。
    * @returns 带标签关联的表单控件。
    */
-  const fieldInput = (field: Form['fields'][number]): ReactNode => {
-    const data = field.secret ? secrets : values
-    const update = (value: Scalar): void => {
-      if (field.secret) setSecrets(previous => ({ ...previous, [field.key]: value }))
-      else setValues(previous => ({ ...previous, [field.key]: value }))
-    }
-    const common = {
-      id: `${prefix}-${field.key}`,
-      disabled: busy,
-      required: field.required && !selected?.configuredSecrets.includes(field.key),
-      'aria-describedby': `${prefix}-${field.key}-hint`,
-    }
-    if (field.schema.type === 'array')
-      return (
-        <>
-          <textarea
-            {...common}
-            rows={3}
-            value={arrayDrafts[field.key] ?? JSON.stringify(data[field.key] ?? [])}
-            onChange={(event) => {
-              setArrayDrafts(previous => ({ ...previous, [field.key]: event.target.value }))
-            }}
-          />
-          <small className={css.muted}>{t('arrayHint')}</small>
-        </>
-      )
-    const currentValue = data[field.key]
-    if (field.schema.enum)
-      return (
-        <select
-          {...common}
-          value={
-            currentValue === undefined || Array.isArray(currentValue)
-              ? ''
-              : String(field.schema.enum.indexOf(currentValue))
-          }
-          onChange={(event) => {
-            if (event.target.value === '') {
-              update('')
-              return
-            }
-            const value = field.schema.enum?.[Number(event.target.value)]
-            if (value !== undefined) update(value)
-          }}
-        >
-          <option value="" />
-          {field.schema.enum.map((value, index) => (
-            <option key={index} value={index}>
-              {String(value)}
-            </option>
-          ))}
-        </select>
-      )
-    if (field.schema.type === 'boolean')
-      return (
-        <select
-          {...common}
-          value={data[field.key] === undefined ? '' : String(data[field.key])}
-          onChange={(event) => {
-            update(event.target.value === '' ? '' : event.target.value === 'true')
-          }}
-        >
-          <option value="" />
-          <option value="true">true</option>
-          <option value="false">false</option>
-        </select>
-      )
-    // 公开 JSON/TOML 配置使用多行编辑；名字只选择控件，不改变 Host 的配置准入或秘密分区。
-    if (!field.secret && field.schema.type === 'string' && /_(?:JSON|TOML)$/.test(field.key))
-      return <textarea {...common} rows={8} spellCheck={false}
-        value={typeof currentValue === 'string' ? currentValue : ''}
-        minLength={field.schema.minLength} maxLength={field.schema.maxLength}
-        onChange={(event) => { update(event.target.value) }} />
-    const numeric = field.schema.type === 'integer' || field.schema.type === 'number'
-    return (
-      <input
-        {...common}
-        type={field.secret ? 'password' : numeric ? 'number' : field.schema.format === 'uri' ? 'url' : 'text'}
-        autoComplete={field.secret ? 'new-password' : 'off'}
-        value={String(data[field.key] ?? '')}
-        min={field.schema.minimum}
-        max={field.schema.maximum}
-        minLength={field.schema.minLength}
-        maxLength={field.schema.maxLength}
-        step={field.schema.type === 'integer' ? 1 : 'any'}
-        placeholder={
-          field.secret && selected?.configuredSecrets.includes(field.key) ? t('secretConfigured') : undefined
-        }
-        onChange={(event) => {
-          update(numeric && event.target.value !== '' ? Number(event.target.value) : event.target.value)
-        }}
-      />
-    )
-  }
+  const fieldInput = (field: Form['fields'][number]): ReactNode => (
+    <ConfigurationInput field={field} value={(field.secret ? secrets : values)[field.key]}
+      arrayDraft={arrayDrafts[field.key]} configured={selected?.configuredSecrets.includes(field.key) ?? false}
+      busy={busy} prefix={prefix} t={t}
+      onChange={(value) => {
+        if (field.secret) {
+          if (Array.isArray(value)) throw new HubUiError('HUB_CONFIGURATION_INVALID')
+          setSecrets(previous => ({ ...previous, [field.key]: value }))
+        } else setValues(previous => ({ ...previous, [field.key]: value }))
+      }}
+      onArray={(value) =>{  setArrayDrafts(previous => ({ ...previous, [field.key]: value })) }} />
+  )
   /** @returns 用户确认后清理未提交的配置草稿；密钥不能遗留到另一项能力的表单。 */
   const leaveCapability = (): boolean => {
     const changed =
@@ -421,6 +346,9 @@ export function HubPanel({ t }: PanelProps): ReactNode {
         </p>
       )}
       <nav className={`${css.actions} ${css.tabs}`} aria-label={t('panel')}>
+        <button disabled={busy || !configured} onClick={() => { if (leaveCapability()) openMcpConfiguration(workspace) }}>
+          {t('mcpSetupTitle')}
+        </button>
         <button
           disabled={busy}
           aria-pressed={mode === 'capabilities'}

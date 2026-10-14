@@ -12,6 +12,7 @@
         engineEntry: !!js process.env.HARNESS_ENGINE_ENTRY ?? ''
         deploymentFile: !!js process.env.NOVA_DEPLOYMENT_CONFIG ?? ''
         resourceHome: !!js process.env.HARNESS_DESKTOP_RESOURCE_HOME ?? ''
+        defaultMcpFile: !!js process.env.NOVA_DEFAULT_MCP_FILE ?? ''
         allowPublishing: !!js process.env.HARNESS_ALLOW_PUBLISHING === 'true'
         # Windows 默认在读取时原子迁移企业配置；密文绑定用户，不能跨机器复制凭据。
         secretProtection: !!js >-
